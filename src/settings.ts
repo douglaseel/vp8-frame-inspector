@@ -2,6 +2,10 @@ import { types as mediasoupTypes } from 'mediasoup';
 
 export class Settings {
 
+  static getPort () : number {
+    return 5555;
+  }
+  
   static getWorkerSettings () : mediasoupTypes.WorkerSettings {
     return {
       rtcMinPort: 40000,

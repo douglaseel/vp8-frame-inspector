@@ -2,9 +2,9 @@ import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { createWorker, types as mediasoupTypes } from 'mediasoup';
 
-import { EnhancedSocket } from './types';
 import { Settings } from '../settings';
 import { Room } from './room';
+import { Socket } from 'socket.io';
 
 export class Manager {
   private readonly workers: mediasoupTypes.Worker[] = [];
@@ -63,7 +63,7 @@ export class Manager {
     room.close();
   }
 
-  async joinRoom (socket: EnhancedSocket, roomId: string) {
+  async joinRoom (roomId: string, socket: Socket) {
     const room = this.getRoom(roomId);
     await room.addPeer(socket);
   }

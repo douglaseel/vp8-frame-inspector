@@ -1,6 +1,8 @@
 
 import { EventEmitter } from "events";
 import { types as mediasoupTypes } from 'mediasoup';
+import { Socket } from "socket.io";
+import { promisify } from "util";
 import { 
   Track,
   Event,
@@ -8,17 +10,17 @@ import {
   ProducerData,
   TransportConnectOptions,
   UserInitializeData,
-  EnhancedSocket
 } from './types';
 
 export class WebRTCPeer extends EventEmitter {
   readonly id: string;
 
-  private readonly socket: EnhancedSocket;
+  private readonly socket: Socket;
   private readonly router: mediasoupTypes.Router;
   private readonly transportOptions: mediasoupTypes.WebRtcTransportOptions;
   private readonly consumers: Map<string, mediasoupTypes.Consumer> = new Map();
   private readonly producers: Map<string, mediasoupTypes.Producer> = new Map();
+  private readonly emitAsync: (event: string, ...data: any) => Promise<any>;
   private recvTransport?: mediasoupTypes.WebRtcTransport;
   private sendTransport?: mediasoupTypes.WebRtcTransport;
   private rtpCapabilities?: mediasoupTypes.RtpCapabilities;
@@ -27,9 +29,10 @@ export class WebRTCPeer extends EventEmitter {
   private eventsPool: Event[] = [];
   private userData: any;
 
+
   constructor (
     id: string,
-    socket: EnhancedSocket,
+    socket: Socket,
     router: mediasoupTypes.Router,
     transportOptions: mediasoupTypes.WebRtcTransportOptions
   ) {
@@ -39,6 +42,7 @@ export class WebRTCPeer extends EventEmitter {
     this.socket = socket;
     this.router = router;
     this.transportOptions = transportOptions;
+    this.emitAsync = promisify(this.socket.emit);
     this.handleSocket()
   }
 
@@ -123,7 +127,7 @@ export class WebRTCPeer extends EventEmitter {
     { appData, routerRtpCapabilities, usersData } : UserInitializeData
   ) : Promise<void> {
     try {      
-      const { rtpCapabilities, userData } = await this.socket.emitAsync('initialize', { id: this.id, appData, routerRtpCapabilities, usersData})
+      const { rtpCapabilities, userData } = await this.emitAsync('initialize', { id: this.id, appData, routerRtpCapabilities, usersData})
       this.rtpCapabilities = rtpCapabilities
       this.userData = userData
       this.ready = true
@@ -370,7 +374,7 @@ export class WebRTCPeer extends EventEmitter {
     });
 
     this.consumers.set(producer.id, consumer);
-    await this.socket.emitAsync('newConsumer', {
+    await this.emitAsync('newConsumer', {
       producerId: producer.id,
       consumerId: consumer.id,
       kind: consumer.kind,

@@ -1,9 +1,4 @@
 import { types as mediasoupTypes } from 'mediasoup';
-import { Socket } from 'socket.io';
-
-export interface EnhancedSocket extends Socket {
-  emitAsync: (event: string, ...data: any) => Promise<any>,
-}
 
 export type Track = {
   kind: mediasoupTypes.MediaKind,

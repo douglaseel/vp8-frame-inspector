@@ -8,8 +8,6 @@ enum FrameTagOffsets {
   VerticalSizeCode = 8,
 }
 
-type ColorSpace = 'YUV' | 'unknown';
-
 enum VP8Constants {
   StartCode = 0x9d012a
 }

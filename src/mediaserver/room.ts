@@ -6,7 +6,6 @@ import { WebRTCPeer } from "./webrtc-peer";
 import { 
   RoomData, 
   UserData, 
-  EnhancedSocket 
 } from './types';
 
 const MAX_IDLE_TIME = 60000
@@ -58,7 +57,7 @@ export class Room extends EventEmitter {
     return { appData: this.appData, usersData };
   }
 
-  async addPeer (socket: EnhancedSocket) : Promise<void> {
+  async addPeer (socket: Socket) : Promise<void> {
     const id = uuidv4();
     const peer = new WebRTCPeer(id, socket, this.router, this.transportOptions);
 
