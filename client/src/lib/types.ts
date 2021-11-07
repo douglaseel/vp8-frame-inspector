@@ -1,4 +1,4 @@
-import { types as mediasoupTypes } from 'mediasoup';
+import { types as mediasoupTypes } from 'mediasoup-client';
 
 export type Track = {
   kind: mediasoupTypes.MediaKind,
