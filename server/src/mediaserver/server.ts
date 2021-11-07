@@ -1,6 +1,8 @@
 import http from 'http';
 import SocketIO from 'socket.io';
 import express from 'express';
+import bodyParser from 'body-parser';
+
 import { Manager } from './manager';
 
 
@@ -15,13 +17,19 @@ export class Server {
     this.configureSocketIOService();
   }
 
+  async load () {
+    await this.manager.load();
+  }
+
   listen (port: number, fn: () => void) : void {
     this.server!.listen(port, fn);
   }
 
   private configureRestService () : void {
     const app = express();
-    app.post('/rooms', async (req, res) => {
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true}));
+    app.post('/room', async (req, res) => {
       try {
         const roomId = await this.manager.createRoom(req.body.appData);
         res.status(201).send({ roomId });
