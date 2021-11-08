@@ -2,7 +2,6 @@
 import { EventEmitter } from "events";
 import { types as mediasoupTypes } from 'mediasoup';
 import { Socket } from "socket.io";
-import { promisify } from "util";
 import { 
   Track,
   Event,
@@ -20,7 +19,6 @@ export class WebRTCPeer extends EventEmitter {
   private readonly transportOptions: mediasoupTypes.WebRtcTransportOptions;
   private readonly consumers: Map<string, mediasoupTypes.Consumer> = new Map();
   private readonly producers: Map<string, mediasoupTypes.Producer> = new Map();
-  private readonly emitAsync: (event: string, ...data: any) => Promise<any>;
   private recvTransport?: mediasoupTypes.WebRtcTransport;
   private sendTransport?: mediasoupTypes.WebRtcTransport;
   private rtpCapabilities?: mediasoupTypes.RtpCapabilities;
@@ -37,12 +35,11 @@ export class WebRTCPeer extends EventEmitter {
     transportOptions: mediasoupTypes.WebRtcTransportOptions
   ) {
     super()
-
     this.id = id;
     this.socket = socket;
     this.router = router;
     this.transportOptions = transportOptions;
-    this.emitAsync = promisify(this.socket.emit);
+
     this.handleSocket()
   }
 
@@ -51,7 +48,7 @@ export class WebRTCPeer extends EventEmitter {
     this.socket.on('disconnect', () => this.onDisconnect());
 
     // transport events
-    this.socket.on('createRecvTransport',  async (fn: Function) => await this.onCreateRecvTransport(fn));
+    this.socket.on('createRecvTransport',  async (_, fn: Function) => await this.onCreateRecvTransport(fn));
     this.socket.on('connectRecvTransport', async (
       connectOptions: TransportConnectOptions, 
       fn: Function
@@ -59,7 +56,7 @@ export class WebRTCPeer extends EventEmitter {
       await this.onConnectRecvTransport(connectOptions, fn);
     });
     
-    this.socket.on('createSendTransport',  async (fn: Function) => await this.onCreateSendTransport(fn));
+    this.socket.on('createSendTransport',  async (_, fn: Function) => await this.onCreateSendTransport(fn));
     this.socket.on('connectSendTransport', async (
       connectOptions: TransportConnectOptions, 
       fn: Function
@@ -127,7 +124,9 @@ export class WebRTCPeer extends EventEmitter {
     { appData, routerRtpCapabilities, usersData } : UserInitializeData
   ) : Promise<void> {
     try {      
-      const { rtpCapabilities, userData } = await this.emitAsync('initialize', { id: this.id, appData, routerRtpCapabilities, usersData})
+      // @ts-ignore
+      const { rtpCapabilities, userData } = await this.socket.emitAsync('initialize', { id: this.id, appData, routerRtpCapabilities, usersData})
+
       this.rtpCapabilities = rtpCapabilities
       this.userData = userData
       this.ready = true
@@ -374,12 +373,12 @@ export class WebRTCPeer extends EventEmitter {
     });
 
     this.consumers.set(producer.id, consumer);
-    await this.emitAsync('newConsumer', {
+    // @ts-ignore
+    await this.socket.emitAsync('newConsumer', {
       producerId: producer.id,
       consumerId: consumer.id,
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
-      type: consumer.type,
       appData: consumer.appData,
       paused,
       id
@@ -430,7 +429,6 @@ export class WebRTCPeer extends EventEmitter {
         trackId: producer.id, 
         kind: producer.kind,
         paused: producer.paused,
-        customData: producer.appData
       };
       availableTracks.push(availableTrack);
     })

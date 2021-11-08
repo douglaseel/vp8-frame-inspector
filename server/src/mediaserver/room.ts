@@ -66,7 +66,7 @@ export class Room extends EventEmitter {
     peer.on('newProducer', ({ producer }) => this.onPeerNewProducer(id, producer));
     peer.on('message', (message, fn) => this.onPeerMessage({ id, message }, fn ));
     peer.on('consumeTrack', ({ peerId, trackId, paused }, fn) => this.onConsumeTrack({ id, peerId, trackId, paused }, fn));
-    
+  
     const roomInfo = this.getInfo();
 
     this.peers.set(id, peer);

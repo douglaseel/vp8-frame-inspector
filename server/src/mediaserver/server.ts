@@ -1,7 +1,7 @@
 import http from 'http';
+import { promisify } from "util";
 import SocketIO from 'socket.io';
 import express from 'express';
-import bodyParser from 'body-parser';
 
 import { Manager } from './manager';
 
@@ -53,6 +53,8 @@ export class Server {
     io.on('connection', async (socket: SocketIO.Socket) : Promise<void> => {
       try {
         const roomId = socket.handshake.query.roomId;
+        // @ts-ignore
+        socket.emitAsync = promisify(socket.emit);
         await this.manager.joinRoom(<string>roomId, socket);
       } catch (error) {
         console.error(error);

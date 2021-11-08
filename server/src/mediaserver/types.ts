@@ -4,7 +4,6 @@ export type Track = {
   kind: mediasoupTypes.MediaKind,
   trackId: string, 
   paused?: boolean,
-  customData?: any
 }
 
 export type Event = { 

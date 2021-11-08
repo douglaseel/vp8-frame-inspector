@@ -18,7 +18,6 @@ export class MediaServerClient extends EventEmitter {
 
   private connected: boolean = false;
   private ready: boolean = false;
-  private roomInfo: any;
 
   constructor (url: string, roomId: string, userData: any) {
     super()
@@ -33,22 +32,11 @@ export class MediaServerClient extends EventEmitter {
     const url = new URL(this.url);
     this.socket = io(url.origin, { 
       path: `/ws`, 
-      // @ts-ignore
-      query: `roomId=${this.roomId}` 
+      query: {
+        roomId: this.roomId
+      },
+      reconnection: false
     });
-
-    // @ts-ignore
-    this.socket.emitAsync = (event: string, body: any) => {
-      return new Promise((resolve, reject) => {
-        this.socket!.emit(event, body, (err: any, data: any) => {
-          if (!err) {
-            resolve(data);
-          } else {
-            reject(err);
-          }
-        });
-      });
-    }
 
     // eventos de conexão
     this.socket.on('connect', () => this.onConnect());
@@ -68,153 +56,11 @@ export class MediaServerClient extends EventEmitter {
     this.socket.on('peerDisconnection', ({ id }) => this.onPeerDisconnection(id));
     this.socket.on('peerMessage', ({ id, message }) => this.onPeerMessage(id, message));
 
-    this.socket.on('newTrackAvailable', ({ id, trackId, kind, customData }) => this.onNewTrackAvailable(id, trackId, kind, customData));
+    this.socket.on('newTrackAvailable', ({ id, trackId, kind }) => this.onNewTrackAvailable(id, trackId, kind));
   }
 
-  private onConnect () : void {
-    console.log('peer connected');
-    this.connected = true;
-    this.emit('connected');
-  }
-
-  private onDisconnect () : void {
-    this.connected = false;
-    this.ready = false;
-
-    console.log('peer disconnected');
-    this.recvTransport?.close();
-    this.sendTransport?.close();
-    this.emit('disconnected');
-  }
-
-  private onPeerConnection (id: string, userData: any) : void {
-    this.emit('userJoined', id, userData);
-  }
-
-  private onPeerDisconnection (id: string) : void {
-    this.emit('userLeft', id);
-  }
-
-  private onPeerMessage (id: string, message: any) : void {
-    this.emit('message', id, message);
-  }
-
-  private onNewTrackAvailable (id: string, trackId: string, kind: mediasoupTypes.MediaKind, customData: any) : void {
-    if (kind === 'audio') {
-      this.emit('newAudioTrackAvailable', id, trackId, customData);
-    } else {
-      this.emit('newVideoTrackAvailable', id, trackId, customData);
-    }
-  }
-
-  private async onInitialize (
-    { id, routerRtpCapabilities, appData, usersData } : InitializeData, 
-    fn: Function
-  ) : Promise<void> {
-    try {
-      console.log('[onInitialize] inicializando peer');
-      console.log('[onInitialize] criando device');
-      this.device = new Device();
-      console.log('[onInitialize] carregando configurações no device');
-      await this.device.load({ routerRtpCapabilities });
-      await this.createTransports();
-      fn(null, { rtpCapabilities: this.device.rtpCapabilities, userData: this.userData });
-      
-      this.ready = true;
-      this.emit('ready', id, appData, usersData);
-    } catch (error) {
-      console.error(error);
-      fn(error);
-    }
-  }
-
-  private async createTransports () : Promise<void> {
-    console.log('[createTransports] criando camada de transporte para recebimento');
-    await this.createRecvTransport();
-    console.log('[createTransports] criando camada de transporte para transmissão');
-    await this.createSendTransport();
-    console.log('[createTransports] camadas de transporte criadas com sucesso');
-  }
-
-  private async createRecvTransport () : Promise<void> {
-    // @ts-ignore
-    const transportInfo = await this.socket!.emitAsync('createRecvTransport');
-    this.recvTransport = await this.device!.createRecvTransport(transportInfo);
-    this.recvTransport.on('connect', async (
-      { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters },
-      callback: Function,
-      errback: Function
-    ) => {
-      await this.onRecvTransportConnect({ dtlsParameters }, callback, errback );
-    });
-  }
-
-  private async onRecvTransportConnect (
-    { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters }, 
-    callback: Function, 
-    errback: Function
-  ) : Promise<void> {
-    try {
-      console.log('[onRecvTransportConnect] conectando camada de transporte para recebimento');
-      // @ts-ignore
-      await this.socket.emitAsync('connectRecvTransport', { transportId: this.recvTransport.id, dtlsParameters });
-      callback();
-    } catch (error) {
-      errback(error);
-    }
-  }
-
-  private async createSendTransport () {
-    // @ts-ignore
-    const transportInfo = await this.socket.emitAsync('createSendTransport');
-    this.sendTransport = await this.device!.createSendTransport(transportInfo);
-
-    this.sendTransport.on('connect', async (
-      { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters }, 
-      callback: Function, 
-      errback: Function
-    ) => {
-      await this.onSendTransportConnect({ dtlsParameters }, callback, errback);
-    })
-
-    this.sendTransport.on('produce', async (
-      producerData: ProducerData,
-      callback: Function,
-      errback: Function
-    ) => { 
-      await this.onNewProducer(producerData, callback, errback); 
-    });
-  }
-
-  async onSendTransportConnect (
-    { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters }, 
-    callback: Function, 
-    errback: Function
-  ) : Promise<void> {
-    try {
-      console.log('[createRecvTransport] conectando camada de transporte para transmissão');
-      // @ts-ignore
-      await this.socket.emitAsync('connectSendTransport', { transportId: this.sendTransport.id, dtlsParameters })
-      callback();
-    } catch (error) {
-      errback(error);
-    }
-  }
-
-  async onNewProducer (producerData: ProducerData, callback: Function, errback: Function) {
-    try {
-      console.log('[onNewProducer] novo "producer" criado')
-      // @ts-ignore
-      const { id } = await this.socket.emitAsync('newProducer', {
-        transportId   : this.sendTransport!.id,
-        kind          : producerData.kind,
-        rtpParameters : producerData.rtpParameters,
-        appData       : producerData.appData
-      })
-      callback({ id })
-    } catch (exception) {
-      errback(exception)
-    }
+  disconnect () {
+    this.socket!.close()
   }
 
   async addTrack(track: MediaStreamTrack, customData?: any ) : Promise<string> {
@@ -256,8 +102,7 @@ export class MediaServerClient extends EventEmitter {
       throw new Error(`Track com id ${trackId} já está sendo transmitida`);
     }
     await producer.resume();
-    // @ts-ignore
-    await this.socket.emitAsync('resumeProducer', { id: trackId });
+    await this.emitAsync('resumeProducer', { id: trackId });
   }
 
   async pauseTrack (trackId: string) : Promise<void> {
@@ -269,8 +114,7 @@ export class MediaServerClient extends EventEmitter {
       throw new Error(`Track com id ${trackId} já está pausada`);
     }
     await producer.pause();
-    // @ts-ignore
-    await this.socket.emitAsync('pauseProducer', { id: trackId });
+    await this.emitAsync('pauseProducer', { id: trackId });
   }
 
   async startConsumingTrack (id: string, trackId: string) : Promise<MediaStreamTrack> {
@@ -280,12 +124,10 @@ export class MediaServerClient extends EventEmitter {
       if (!consumer.paused) {
         throw new Error(`Consumer da track com id ${trackId} já está sendo consumido!`);
       }
-      // @ts-ignore
-      await this.socket.emitAsync('resumeConsumer', { id, trackId });
+      await this.emitAsync('resumeConsumer', { id, trackId });
       await consumer.resume();
     } else {
-      // @ts-ignore
-      await this.socket.emitAsync('createConsumer', { id, trackId });
+      await this.emitAsync('createConsumer', { id, trackId });
       consumer = this.consumers.get(trackId);
     }
     return consumer!.track;
@@ -296,9 +138,147 @@ export class MediaServerClient extends EventEmitter {
     if (!consumer) {
       throw new Error(`Consumer da track com id ${trackId} não existe!`);
     }
-    // @ts-ignore
-    await this.socket.emitAsync('pauseConsumer', { trackId });
+    await this.emitAsync('pauseConsumer', { trackId });
     await consumer.pause();
+  }
+
+  private onConnect () : void {
+    this.connected = true;
+    this.emit('connected');
+  }
+
+  private onDisconnect () : void {
+    this.connected = false;
+    this.ready = false;
+
+    this.recvTransport?.close();
+    this.sendTransport?.close();
+    this.emit('disconnected');
+  }
+
+  private onPeerConnection (id: string, userData: any) : void {
+    this.emit('userJoined', id, userData);
+  }
+
+  private onPeerDisconnection (id: string) : void {
+    this.emit('userLeft', id);
+  }
+
+  private onPeerMessage (id: string, message: any) : void {
+    this.emit('message', id, message);
+  }
+
+  private onNewTrackAvailable (id: string, trackId: string, kind: mediasoupTypes.MediaKind) : void {
+    if (kind === 'audio') {
+      this.emit('newAudioTrackAvailable', id, trackId);
+    } else {
+      this.emit('newVideoTrackAvailable', id, trackId);
+    }
+  }
+
+  private async onInitialize (
+    { id, routerRtpCapabilities, appData, usersData } : InitializeData, 
+    fn: Function
+  ) : Promise<void> {
+    try {
+      console.log('[onInitialize] inicializando peer');
+      console.log('[onInitialize] criando device');
+      this.device = new Device();
+      console.log('[onInitialize] carregando configurações no device');
+      await this.device.load({ routerRtpCapabilities });
+      await this.createTransports();
+      fn(null, { rtpCapabilities: this.device.rtpCapabilities, userData: this.userData });
+      
+      this.ready = true;
+      this.emit('ready', id, appData, usersData);
+    } catch (error) {
+      console.error(error);
+      fn(error);
+    }
+  }
+
+  private async createTransports () : Promise<void> {
+    console.log('[createTransports] criando camada de transporte para recebimento');
+    await this.createRecvTransport();
+    console.log('[createTransports] criando camada de transporte para transmissão');
+    await this.createSendTransport();
+    console.log('[createTransports] camadas de transporte criadas com sucesso');
+  }
+
+  private async createRecvTransport () : Promise<void> {
+    const transportInfo = await this.emitAsync('createRecvTransport');
+    this.recvTransport = await this.device!.createRecvTransport(transportInfo);
+    this.recvTransport.on('connect', async (
+      { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters },
+      callback: Function,
+      errback: Function
+    ) => {
+      await this.onRecvTransportConnect({ dtlsParameters }, callback, errback );
+    });
+  }
+
+  private async onRecvTransportConnect (
+    { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters }, 
+    callback: Function, 
+    errback: Function
+  ) : Promise<void> {
+    try {
+      console.log('[onRecvTransportConnect] conectando camada de transporte para recebimento');
+      await this.emitAsync('connectRecvTransport', { transportId: this.recvTransport!.id, dtlsParameters });
+      callback();
+    } catch (error) {
+      errback(error);
+    }
+  }
+
+  private async createSendTransport () {
+    const transportInfo = await this.emitAsync('createSendTransport');
+    this.sendTransport = await this.device!.createSendTransport(transportInfo);
+
+    this.sendTransport.on('connect', async (
+      { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters }, 
+      callback: Function, 
+      errback: Function
+    ) => {
+      await this.onSendTransportConnect({ dtlsParameters }, callback, errback);
+    })
+
+    this.sendTransport.on('produce', async (
+      producerData: ProducerData,
+      callback: Function,
+      errback: Function
+    ) => { 
+      await this.onNewProducer(producerData, callback, errback); 
+    });
+  }
+
+  private async onSendTransportConnect (
+    { dtlsParameters } : { dtlsParameters: mediasoupTypes.DtlsParameters }, 
+    callback: Function, 
+    errback: Function
+  ) : Promise<void> {
+    try {
+      console.log('[createRecvTransport] conectando camada de transporte para transmissão');
+      await this.emitAsync('connectSendTransport', { transportId: this.sendTransport!.id, dtlsParameters })
+      callback();
+    } catch (error) {
+      errback(error);
+    }
+  }
+
+  private async onNewProducer (producerData: ProducerData, callback: Function, errback: Function) {
+    try {
+      console.log('[onNewProducer] novo "producer" criado')
+      const { id } = await this.emitAsync('newProducer', {
+        transportId   : this.sendTransport!.id,
+        kind          : producerData.kind,
+        rtpParameters : producerData.rtpParameters,
+        appData       : producerData.appData
+      })
+      callback({ id })
+    } catch (exception) {
+      errback(exception)
+    }
   }
   
   private async onNewConsumer (data: ConsumerData, fn: Function) : Promise<void> {
@@ -356,11 +336,18 @@ export class MediaServerClient extends EventEmitter {
   }
 
   async sendMessage (message: any) {
-    // @ts-ignore
-    this.socket.emitAsync('message', message);
+    this.emitAsync('message', message);
   }
-
-  disconnect () {
-    this.socket!.close()
+  
+  private emitAsync(event: string, body?: any) : Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.socket!.emit(event, body, (err: any, data: any) => {
+        if (!err) {
+          resolve(data);
+        } else {
+          reject(err);
+        }
+      });
+    });
   }
 };

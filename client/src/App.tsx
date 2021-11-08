@@ -1,37 +1,21 @@
-import React, { useState } from 'react';
+import React  from 'react';
 import './App.css';
+import Lobby from './pages/lobby/Lobby';
+import Room from './pages/room/Room';
 
 function App() {
-  const [ fetching, setFetching ] = useState(false);
-  const [ error, setError ] = useState("");
 
-  const createRoom = async () : Promise<void> => {
-    setFetching(true);
-  
-    const body = JSON.stringify({ appData: "test"} )
-    const res = await fetch('/room', { method: "POST", body });
-    if (res.status !== 201) {
-      setError(`Request failed with status ${res.status}`);
-      setFetching(false);
-      return;
-    }
-
-    const { roomId } : { roomId: string } = await res.json();
-    window.location.pathname = '/' + roomId;
+  const searchParams = new URLSearchParams(window.location.search);
+  const roomId = searchParams.get('roomId');
+  if (roomId) {
+    return (
+      <Room id={roomId}/>
+    )
   }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        { error !== ""  && 
-          <p>{ error }</p>
-        }
-        <button onClick={createRoom} disabled={fetching}>
-          Create a room
-        </button>
-      </header>
-    </div>
-  );
+    <Lobby />
+  )
 }
 
 export default App;
