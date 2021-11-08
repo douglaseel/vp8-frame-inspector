@@ -1,5 +1,4 @@
 import React  from 'react';
-import './App.css';
 import Lobby from './pages/lobby/Lobby';
 import Room from './pages/room/Room';
 
