@@ -13,7 +13,7 @@ export type TransportConnectOptions = {
 export type ProducerData = {
   kind: mediasoupTypes.MediaKind, 
   rtpParameters: mediasoupTypes.RtpParameters, 
-  appData: any
+  appData: AppData
 }
 
 export type ConsumerData = {
@@ -21,7 +21,7 @@ export type ConsumerData = {
   consumerId: string,
   kind: mediasoupTypes.MediaKind,
   rtpParameters: mediasoupTypes.RtpParameters,
-  appData: any,
+  appData: AppData,
   paused?: boolean,
   id: string,
 }
@@ -32,9 +32,13 @@ export type UserData = {
   availableTracks: Track[]
 }
 
+export type AppData = {
+  name: string
+}
+
 export type InitializeData = {
   id: string, 
   routerRtpCapabilities: mediasoupTypes.RtpCapabilities, 
-  appData: any,
+  appData: AppData,
   usersData: UserData[]
 }

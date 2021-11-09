@@ -4,9 +4,12 @@ export type UserViewProps = {
   id: string,
   audioTrack?: MediaStreamTrack,
   videoTrack?: MediaStreamTrack
+  userData?: {
+    username: string
+  }
 }
 
-function UserView({ id, audioTrack, videoTrack } : UserViewProps) {
+function UserView({ id, audioTrack, videoTrack, userData } : UserViewProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -26,7 +29,7 @@ function UserView({ id, audioTrack, videoTrack } : UserViewProps) {
   
   return (
     <div>
-      <p>UserId: {id}</p>
+      <p>{userData?.username || id}</p>
       <video ref={videoRef} autoPlay/>
       <audio ref={audioRef} autoPlay/>
     </div>

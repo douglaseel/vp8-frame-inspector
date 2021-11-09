@@ -51,7 +51,7 @@ export class Room extends EventEmitter {
     this.inspector.close();
   }
 
-  getInfo () : RoomData {
+  private getInfo () : RoomData {
     const usersData: UserData[] = [];
     this.peers.forEach(peer => {
       if (peer.isReady()) {

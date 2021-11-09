@@ -28,9 +28,10 @@ export class Server {
   private configureRestService () : void {
     const app = express();
     app.use(express.json());
-    app.use(express.urlencoded({ extended: true}));
+
     app.post('/room', async (req, res) => {
       try {
+        console.log("req.body", req.body)
         const roomId = await this.manager.createRoom(req.body.appData);
         res.status(201).send({ roomId });
       } catch (error) {

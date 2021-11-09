@@ -63,8 +63,8 @@ export class MediaServerClient extends EventEmitter {
     this.socket!.close()
   }
 
-  async addTrack(track: MediaStreamTrack, customData?: any ) : Promise<string> {
-    const producer = await this.sendTransport!.produce({ track, appData: customData || {} })
+  async addTrack(track: MediaStreamTrack) : Promise<string> {
+    const producer = await this.sendTransport!.produce({ track })
     this.producers.set(producer.id, producer)
     return producer.id
   }
