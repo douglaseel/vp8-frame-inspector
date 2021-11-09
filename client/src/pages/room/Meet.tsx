@@ -1,5 +1,6 @@
-import { stringify } from 'querystring';
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from "react-router-dom";
+
 import { MediaServerClient } from '../../lib/mediaserver-client';
 import { UserData } from '../../lib/types';
 
@@ -7,7 +8,9 @@ import UserView from './UserView';
 
 function Meet({ roomId, username } : { roomId: string, username: string }) {
 
-  const mediaClientRef = useRef<MediaServerClient | null>(null);
+  const navigate = useNavigate();
+  
+  const meetClientRef = useRef<MediaServerClient | null>(null);
   const [ audioTracks, updateAudioTracks ] = useState(new Map<string, MediaStreamTrack>());
   const [ videoTracks, updateVideoTracks ] = useState(new Map<string, MediaStreamTrack>());
   const [ availableUsers, updateAvailableUsers ] = useState(new Map<string, any>());
@@ -16,36 +19,41 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
   const [ webcamTrackId, setWebcamTrackId ] = useState<string | null>(null);
 
   useEffect(() => {
-    
-    const mediaClient = new MediaServerClient(window.location.origin, roomId, { username });
+    const meetClient = new MediaServerClient(window.location.origin, roomId, { username });
 
-    mediaClient.on('connect', () => {
+    meetClient.on('connect', () => {
       console.log('Conectou!');
     });
+
+    meetClient.on('disconnect', () => {
+      console.log('Disconnected!');
+      navigate('/');
+    })
   
-    mediaClient.on('ready', async (id: string, appData: any, usersData: UserData[]) => {
+    meetClient.on('ready', async (id: string, appData: any, usersData: UserData[]) => {
       console.log('Ready', appData);
+
       await Promise.all(
         usersData.map(async ({ id, userData, availableTracks }) => {
           availableUsers.set(id, { id, userData });
           await Promise.all(
             availableTracks.map(async ({ trackId, kind, paused }) => {
               if (paused) return;
-              const track = await mediaClient.startConsumingTrack(id, trackId);
+              const track = await meetClient.startConsumingTrack(id, trackId);
               (kind === 'audio') ? audioTracks.set(id, track) : videoTracks.set(id, track);
             })
           )
         })
       );
 
-      mediaClientRef.current = mediaClient;
+      meetClientRef.current = meetClient;
 
       updateAvailableUsers(new Map(availableUsers));
       updateAudioTracks(new Map(audioTracks));
       updateVideoTracks(new Map(videoTracks));
     });
 
-    mediaClient.on('userJoined', (id: string, userData: any) => {
+    meetClient.on('userJoined', (id: string, userData: any) => {
       console.log('UserJoined', id)
       updateAvailableUsers(current => {
         current.set(id, { id, userData });
@@ -53,31 +61,45 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
       });
     });
 
-    mediaClient.on('userLeft', (id: string, userData: any) => {
+    meetClient.on('userLeft', (id: string) => {
       console.log('UserLeft', id);
       updateAvailableUsers(current => {
         current.delete(id);
         return new Map(current);
       });
+
+      if (audioTracks.has(id)) {
+        updateAudioTracks(current => {
+          current.delete(id);
+          return new Map(current);
+        });
+      }
+
+      if (videoTracks.has(id)) {
+        updateVideoTracks(current => {
+          current.delete(id);
+          return new Map(current);
+        });
+      }
     });
 
-    mediaClient.on('newAudioTrackAvailable', async (id: string, trackId: string) : Promise<void> => {
-      const track = await mediaClient.startConsumingTrack(id, trackId);
+    meetClient.on('newAudioTrackAvailable', async (id: string, trackId: string) : Promise<void> => {
+      const track = await meetClient.startConsumingTrack(id, trackId);
       updateAudioTracks(current => {
         current.set(id, track);
         return new Map(current);
       });
     });
 
-    mediaClient.on('newVideoTrackAvailable', async (id: string, trackId: string) : Promise<void> => {
-      const track = await mediaClient.startConsumingTrack(id, trackId);
+    meetClient.on('newVideoTrackAvailable', async (id: string, trackId: string) : Promise<void> => {
+      const track = await meetClient.startConsumingTrack(id, trackId);
       updateVideoTracks(current => {
         current.set(id, track);
         return new Map(current);
       });
     });
 
-    mediaClient.on('consumerClosed',  (id: string, trackId: string) => {
+    meetClient.on('trackEnded',  (id: string, trackId: string) => {
       if (audioTracks.has(trackId)) {
         updateAudioTracks(current => {
           current.delete(trackId);
@@ -92,34 +114,34 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
     });
 
     return () => {
-      mediaClient.disconnect();
+      meetClient.disconnect();
     }
-  }, [ roomId ]);
+  }, [ roomId, username ]);
 
   const startWebcamStreaming = async () => {
-    if (mediaClientRef.current && !webcamTrackId) {
-      const trackId = await mediaClientRef.current.addCameraTrack();
+    if (meetClientRef.current && !webcamTrackId) {
+      const trackId = await meetClientRef.current.addCameraTrack();
       setWebcamTrackId(trackId);
     }
   }
 
   const stopWebcamStreaming = async () => {
-    if (mediaClientRef.current && webcamTrackId) {
-      await mediaClientRef.current.stopTrack(webcamTrackId);
+    if (meetClientRef.current && webcamTrackId) {
+      await meetClientRef.current.stopTrack(webcamTrackId);
       setWebcamTrackId(null);
     }
   }
 
   const startMicStreaming = async () => {
-    if (mediaClientRef.current && !micTrackId) {
-      const trackId = await mediaClientRef.current.addMicrophoneTrack();
+    if (meetClientRef.current && !micTrackId) {
+      const trackId = await meetClientRef.current.addMicrophoneTrack();
       setMicTrackId(trackId);
     }
   }
 
   const stopMicStreaming = async () => {
-    if (mediaClientRef.current && micTrackId) {
-      await mediaClientRef.current.stopTrack(micTrackId);
+    if (meetClientRef.current && micTrackId) {
+      await meetClientRef.current.stopTrack(micTrackId);
       setMicTrackId(null);
     }
   }
@@ -129,13 +151,13 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
       <h1>Room </h1>
 
       <label>Microphone:
-        <input type="button" onClick={startMicStreaming} value="Start" disabled={!mediaClientRef.current || !!micTrackId}/>
-        <input type="button" onClick={stopMicStreaming} value="Stop" disabled={!mediaClientRef.current || !micTrackId}/>
+        <input type="button" onClick={startMicStreaming} value="Start" disabled={!meetClientRef.current || !!micTrackId}/>
+        <input type="button" onClick={stopMicStreaming} value="Stop" disabled={!meetClientRef.current || !micTrackId}/>
       </label>
 
       <label>Webcam:
-        <input type="button" onClick={startWebcamStreaming} value="Start" disabled={!mediaClientRef.current || !!webcamTrackId}/>
-        <input type="button" onClick={stopWebcamStreaming} value="Stop" disabled={!mediaClientRef.current || !webcamTrackId}/>
+        <input type="button" onClick={startWebcamStreaming} value="Start" disabled={!meetClientRef.current || !!webcamTrackId}/>
+        <input type="button" onClick={stopWebcamStreaming} value="Stop" disabled={!meetClientRef.current || !webcamTrackId}/>
       </label>
 
       { Array.from(availableUsers.values()).map(({ id, userData }) => (

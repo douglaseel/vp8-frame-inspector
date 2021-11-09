@@ -31,9 +31,19 @@ export class Server {
 
     app.post('/room', async (req, res) => {
       try {
-        console.log("req.body", req.body)
         const roomId = await this.manager.createRoom(req.body.appData);
         res.status(201).send({ roomId });
+      } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+      }
+    })
+
+    app.get('/rooms/:roomId', (req, res) => {
+      try {
+        const roomId = req.params.roomId;
+        const appData = this.manager.getRoomAppData(roomId);
+        res.status(200).send({ appData });
       } catch (error) {
         console.error(error);
         res.sendStatus(500);

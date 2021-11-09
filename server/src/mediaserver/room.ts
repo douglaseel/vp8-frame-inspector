@@ -13,13 +13,14 @@ const MAX_IDLE_TIME = 60000
 
 export class Room extends EventEmitter {
   private readonly id: string;
-  private readonly appData: object;
   private readonly router: mediasoupTypes.Router;
   private readonly inspector: Inspector;
   private readonly transportOptions: mediasoupTypes.WebRtcTransportOptions;
   private readonly peers: Map<string, WebRTCPeer> = new Map();
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
   private closed: boolean = false;
+
+  readonly appData: object;
 
   constructor (id: string, appData: object, router: mediasoupTypes.Router, transportOptions: mediasoupTypes.WebRtcTransportOptions) {
     super();
@@ -104,36 +105,6 @@ export class Room extends EventEmitter {
   private onPeerNewProducer (id: string, producer: mediasoupTypes.Producer) : void {
     console.log(`[onPeerNewProducer] ${id} => criou um novo producer com trackId ${producer.id}`)
     const trackId = producer.id
-
-    producer.observer.on('close', () => {
-      this.peers.forEach(peer => {
-        peer.closeConsumer(trackId);
-      })
-      this.broadcastMessage('consumerClosed', { id, trackId }, id)
-    })
-
-    producer.observer.on('resume', async () => {
-      const promises: Promise<void>[] = [];
-      this.peers.forEach(peer => {
-        if (peer.getConsumer({ trackId })) {
-          promises.push(peer.resumeConsumer({ trackId }));
-        }
-      })
-      await Promise.all(promises);
-      this.broadcastMessage('consumerResumed', { id, trackId }, id);
-    })
-    
-    producer.observer.on('pause', async () => {
-      const promises: Promise<void>[] = [];
-      this.peers.forEach(peer => {
-        if (peer.getConsumer({ trackId })) {
-          promises.push(peer.pauseConsumer({ trackId }));
-        }
-      })
-      await Promise.all(promises);
-      this.broadcastMessage('consumerPaused', { id, trackId }, id);
-    })
-
     const availableTrack = { id, trackId, kind: producer.kind, customData: producer.appData };
     this.broadcastMessage('newTrackAvailable', availableTrack, id);
   }

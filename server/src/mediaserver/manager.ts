@@ -72,6 +72,10 @@ export class Manager {
     await room.addPeer(socket);
   }
 
+  getRoomAppData (roomId: string) {
+    return this.getRoom(roomId).appData;
+  }
+
   private async getAvailableWorker () : Promise<mediasoupTypes.Worker> {
     const workersResources = await Promise.all(this.workers.map(worker => worker.getResourceUsage()))
     const workersUserTime = workersResources.map(resource => resource.ru_utime);

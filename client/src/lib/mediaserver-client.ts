@@ -47,7 +47,7 @@ export class MediaServerClient extends EventEmitter {
 
     // eventos do consumer
     this.socket.on('newConsumer', async (data, fn) => await this.onNewConsumer(data, fn));
-    this.socket.on('consumerClosed', async (data) => await this.onConsumerClosed(data));
+    this.socket.on('consumerClosed', (data) => this.onConsumerClosed(data));
 
     // eventos da sala
     this.socket.on('peerConnection', ({ id, userData }) => this.onPeerConnection(id, userData));

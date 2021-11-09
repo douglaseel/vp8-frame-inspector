@@ -4,7 +4,7 @@ import { Route, Routes} from 'react-router-dom';
 import Lobby from '../pages/lobby/Lobby';
 import Room from '../pages/room/Room';
 
-export default () => {
+const RouterConfig = () => {
   return (
     <Routes>
       <Route path="/" element={<Lobby />} />
@@ -12,3 +12,5 @@ export default () => {
     </Routes>
   );
 };
+
+export default RouterConfig;

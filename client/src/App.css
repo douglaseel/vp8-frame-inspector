@@ -33,3 +33,7 @@ body, #root {
   font-size: 20px;
   margin: 10px;
 }
+
+.roomName {
+  color: blue;
+}
