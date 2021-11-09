@@ -41,12 +41,17 @@ function Room() {
   }
 
   if (roomId === '' || username.trim() === '') {
-    const onClick = () => setUsername(inputRef.current!.value);
+    const handleButton = () => setUsername(inputRef.current!.value);
+    const handleKeyPress = (event: any) => {
+      if(event.key === 'Enter'){
+        handleButton();
+      }
+    };
     return (
       <div className="Lobby">
         <h1>Welcome to <span className="roomName">{roomName}</span> room!</h1>
-        <label>Your name is <input ref={inputRef} type="text" /></label>
-        <button onClick={onClick}>
+        <label>Your name is <input ref={inputRef} type="text" onKeyPress={handleKeyPress}/></label>
+        <button onClick={handleButton}>
           Join room!
         </button>
       </div>
@@ -56,6 +61,7 @@ function Room() {
   return (
     <Meet
       roomId={roomId}
+      roomName={roomName}
       username={username}
     />
   );

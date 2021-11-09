@@ -28,10 +28,16 @@ function Lobby () {
     navigate(`/room/${roomId}`);
   }
 
+  const handleKeyPress = (event: any) => {
+    if(event.key === 'Enter'){
+      createRoom();
+    }
+  };
+
   return (
     <div className="Lobby">
       <h1>VP8 Frame Inspector - SFU demo</h1>
-      <label>Room's name: <input ref={inputRef} type="text" /></label>
+      <label>Room's name: <input ref={inputRef} type="text" onKeyPress={handleKeyPress} /></label>
       <button onClick={createRoom} disabled={fetching}>
         Create a new room
       </button>

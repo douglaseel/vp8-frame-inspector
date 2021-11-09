@@ -6,10 +6,10 @@ import { UserData } from '../../lib/types';
 
 import UserView from './UserView';
 
-function Meet({ roomId, username } : { roomId: string, username: string }) {
+function Meet({ roomId, roomName, username } : { roomId: string, roomName: string, username: string }) {
 
   const navigate = useNavigate();
-  
+
   const meetClientRef = useRef<MediaServerClient | null>(null);
   const [ audioTracks, updateAudioTracks ] = useState(new Map<string, MediaStreamTrack>());
   const [ videoTracks, updateVideoTracks ] = useState(new Map<string, MediaStreamTrack>());
@@ -148,7 +148,7 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
 
   return (
     <div>
-      <h1>Room </h1>
+      <h1>Room <span className="roomName">{roomName}</span></h1>
 
       <label>Microphone:
         <input type="button" onClick={startMicStreaming} value="Start" disabled={!meetClientRef.current || !!micTrackId}/>
