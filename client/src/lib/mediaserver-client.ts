@@ -48,8 +48,6 @@ export class MediaServerClient extends EventEmitter {
     // eventos do consumer
     this.socket.on('newConsumer', async (data, fn) => await this.onNewConsumer(data, fn));
     this.socket.on('consumerClosed', async (data) => await this.onConsumerClosed(data));
-    this.socket.on('consumerResumed', async (data) => await this.onConsumerResumed(data));
-    this.socket.on('consumerPaused', async (data) => await this.onConsumerPaused(data));
 
     // eventos da sala
     this.socket.on('peerConnection', ({ id, userData }) => this.onPeerConnection(id, userData));
@@ -115,6 +113,16 @@ export class MediaServerClient extends EventEmitter {
     }
     await producer.pause();
     await this.emitAsync('pauseProducer', { id: trackId });
+  }
+
+  stopTrack (trackId: string) : void {
+    const producer = this.producers.get(trackId);
+    if (!producer) {
+      throw new Error(`Track com id ${trackId} não existe`);
+    }
+    producer.close();
+    this.producers.delete(trackId);
+    this.socket!.emit('producerClosed', { id: trackId });
   }
 
   async startConsumingTrack (id: string, trackId: string) : Promise<MediaStreamTrack> {
@@ -309,27 +317,7 @@ export class MediaServerClient extends EventEmitter {
         consumer.close();
         this.consumers.delete(trackId);
       }
-      this.emit('trackEnded', { id, trackId });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  private onConsumerResumed (
-    { id, trackId } : { id: string, trackId: string }
-  ) : void {
-    try {
-      this.emit('trackResumed', { id, trackId });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  private onConsumerPaused (
-    { id, trackId } : { id: string, trackId: string }
-  ) : void {
-    try {
-      this.emit('trackPaused', { id, trackId });
+      this.emit('trackEnded', id, trackId);
     } catch (error) {
       console.error(error);
     }

@@ -83,12 +83,9 @@ export class WebRTCPeer extends EventEmitter {
     ) => {
       await this.onResumeProducer(id, fn)
     });
-    
-    this.socket.on('pauseProducer', async (
-      { id } : { id: string }, 
-      fn: Function
-    ) => { 
-      await this.onPauseProducer(id, fn)
+
+    this.socket.on('closeProducer', ({ trackId } : { trackId: string }) => {
+      this.onCloseProducer(trackId);
     });
 
     // consumer events
@@ -97,20 +94,6 @@ export class WebRTCPeer extends EventEmitter {
       fn: Function
     ) => {
       await this.onCreateConsumer({ id, trackId}, fn);
-    });
-
-    this.socket.on('pauseConsumer', async (
-      { trackId } : { trackId: string },
-      fn: Function
-    ) => {
-      await this.onPauseConsumer(trackId, fn);
-    });
-
-    this.socket.on('resumeConsumer', async (
-      { trackId } : { trackId: string },
-      fn: Function
-    ) => {
-      await this.onResumeConsumer(trackId, fn);
     });
 
     this.socket.on('closeConsumer', async (
@@ -281,18 +264,8 @@ export class WebRTCPeer extends EventEmitter {
     }
   }
 
-  private async onPauseProducer (id: string, fn: Function) : Promise<void> {
-    try {
-      const producer = this.producers.get(id);
-      if (!producer) {
-        throw new Error(`Producer com id ${id} não existe`);
-      }
-      await producer.pause();
-      fn(null);
-    } catch (error) {
-      console.error(error);
-      fn(error);
-    }
+  private onCloseProducer (id: string) : void {
+    this.producers.get(id)?.close();
   }
 
   private onCreateConsumer (
@@ -302,57 +275,9 @@ export class WebRTCPeer extends EventEmitter {
     this.emit('consumeTrack', { peerId: id, trackId }, fn)
   }
 
-  private async onPauseConsumer (trackId: string, fn: Function) : Promise<void> {
-    try {
-      const consumer = this.consumers.get(trackId);
-      if (!consumer) {
-        throw new Error(`Consumer da track com id ${trackId} não existe`);
-      }
-      await consumer.pause();
-      fn(null);
-    } catch (error) {
-      console.error(error)
-      fn(error)
-    }
-  }
-
-  private async onResumeConsumer (trackId: string, fn: Function) : Promise<void> {
-    try {
-      const consumer = this.consumers.get(trackId);
-      if (!consumer) {
-        throw new Error(`Consumer da track com id ${trackId} não existe`);
-      }
-      await consumer.resume();
-      fn(null);
-    } catch (error) {
-      console.error(error);
-      fn(error);
-    }
-  }
-
   private onCloseConsumer (trackId: string, fn: Function) : void {
     this.closeConsumer(trackId)
     fn(null)
-  }
-
-  async resumeConsumer (
-    { trackId } : { trackId : string }
-  ) : Promise<void> {
-    const consumer = this.consumers.get(trackId);
-    if (!consumer) {
-      throw new Error(`Consumer da track com id ${trackId} não existe`);
-    }
-    await consumer.resume();
-  }
-
-  async pauseConsumer (
-    { trackId } : { trackId : string }
-  ) : Promise<void> {
-    const consumer = this.consumers.get(trackId);
-    if (!consumer) {
-      throw new Error(`Consumer da track com id ${trackId} não existe`);
-    }
-    await consumer.pause();
   }
 
   closeConsumer (trackId : string) : void {

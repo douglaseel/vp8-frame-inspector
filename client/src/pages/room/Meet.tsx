@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from "react-router-dom";
+import { stringify } from 'querystring';
+import React, { useEffect, useState, useRef } from 'react';
 import { MediaServerClient } from '../../lib/mediaserver-client';
 import { UserData } from '../../lib/types';
 
@@ -7,11 +7,16 @@ import UserView from './UserView';
 
 function Meet({ roomId, username } : { roomId: string, username: string }) {
 
+  const mediaClientRef = useRef<MediaServerClient | null>(null);
   const [ audioTracks, updateAudioTracks ] = useState(new Map<string, MediaStreamTrack>());
   const [ videoTracks, updateVideoTracks ] = useState(new Map<string, MediaStreamTrack>());
   const [ availableUsers, updateAvailableUsers ] = useState(new Map<string, any>());
 
+  const [ micTrackId, setMicTrackId ] = useState<string | null>(null);
+  const [ webcamTrackId, setWebcamTrackId ] = useState<string | null>(null);
+
   useEffect(() => {
+    
     const mediaClient = new MediaServerClient(window.location.origin, roomId, { username });
 
     mediaClient.on('connect', () => {
@@ -32,6 +37,8 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
           )
         })
       );
+
+      mediaClientRef.current = mediaClient;
 
       updateAvailableUsers(new Map(availableUsers));
       updateAudioTracks(new Map(audioTracks));
@@ -70,19 +77,70 @@ function Meet({ roomId, username } : { roomId: string, username: string }) {
       });
     });
 
-    // @ts-ignore
-    global.mediaClient = mediaClient;
+    mediaClient.on('consumerClosed',  (id: string, trackId: string) => {
+      if (audioTracks.has(trackId)) {
+        updateAudioTracks(current => {
+          current.delete(trackId);
+          return new Map(current);
+        });
+      } else if (videoTracks.has(trackId)) {
+        updateVideoTracks(current => {
+          current.delete(trackId);
+          return new Map(current);
+        });
+      }
+    });
 
     return () => {
       mediaClient.disconnect();
     }
   }, [ roomId ]);
 
+  const startWebcamStreaming = async () => {
+    if (mediaClientRef.current && !webcamTrackId) {
+      const trackId = await mediaClientRef.current.addCameraTrack();
+      setWebcamTrackId(trackId);
+    }
+  }
+
+  const stopWebcamStreaming = async () => {
+    if (mediaClientRef.current && webcamTrackId) {
+      await mediaClientRef.current.stopTrack(webcamTrackId);
+      setWebcamTrackId(null);
+    }
+  }
+
+  const startMicStreaming = async () => {
+    if (mediaClientRef.current && !micTrackId) {
+      const trackId = await mediaClientRef.current.addMicrophoneTrack();
+      setMicTrackId(trackId);
+    }
+  }
+
+  const stopMicStreaming = async () => {
+    if (mediaClientRef.current && micTrackId) {
+      await mediaClientRef.current.stopTrack(micTrackId);
+      setMicTrackId(null);
+    }
+  }
+
   return (
     <div>
       <h1>Room </h1>
+
+      <label>Microphone:
+        <input type="button" onClick={startMicStreaming} value="Start" disabled={!mediaClientRef.current || !!micTrackId}/>
+        <input type="button" onClick={stopMicStreaming} value="Stop" disabled={!mediaClientRef.current || !micTrackId}/>
+      </label>
+
+      <label>Webcam:
+        <input type="button" onClick={startWebcamStreaming} value="Start" disabled={!mediaClientRef.current || !!webcamTrackId}/>
+        <input type="button" onClick={stopWebcamStreaming} value="Stop" disabled={!mediaClientRef.current || !webcamTrackId}/>
+      </label>
+
       { Array.from(availableUsers.values()).map(({ id, userData }) => (
-        <UserView 
+        <UserView
+          key={id}
           id={id}
           userData={userData}
           audioTrack={audioTracks.get(id)}
