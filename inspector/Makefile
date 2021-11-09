@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall `pkg-config --cflags gstreamer-1.0 glib-2.0`
+CFLAGS=-Wunused-variable `pkg-config --cflags gstreamer-1.0 glib-2.0`
 LDFLAGS=`pkg-config --libs gstreamer-1.0 glib-2.0`
 
 

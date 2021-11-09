@@ -7,7 +7,6 @@
 #include "bool_decoder.h"
 #include "vp8_parser.h"
 
-
 enum {
   OK = 0,
   ERROR_PARSE_ARGS = 1,
@@ -207,7 +206,6 @@ stream_inspector_initialize (gchar * padName) {
   StreamInspector * streamInspector = (StreamInspector *) malloc(1 * sizeof(StreamInspector));
   gchar **split = g_strsplit(padName, "_", 0);
   gchar *ssrc = split[4];
-  gchar *pt = split[5];
 
   streamInspector->bin = gst_bin_new(NULL);
   streamInspector->ssrc = g_strdup_printf("%s", ssrc);
@@ -253,9 +251,6 @@ on_pad_added (GstElement * rtpbin, GstPad * new_pad, gpointer data)
   if (!g_str_has_prefix(padName, "recv_rtp_src_")) {
     return; 
   }
-
-  GstCaps * padCaps = gst_pad_get_current_caps(new_pad);
-  GstStructure * capsStruct = gst_caps_get_structure (padCaps, 0);
 
   StreamInspector * streamInspector = stream_inspector_initialize(padName);
 
