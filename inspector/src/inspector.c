@@ -39,13 +39,15 @@ static gint port = -1;
 static gint payloadType = 0;
 static gchar * outputPath = NULL;
 static gchar * inputFile = NULL;
+static gboolean useStdout = FALSE;
 
 static GOptionEntry entries[] =
 {
   { "port", 'p', 0, G_OPTION_ARG_INT, &port, "Port to receive rtp stream", "50000" },
   { "payloadType", 't', 0, G_OPTION_ARG_INT, &payloadType, "Expected VP8 Payload Type [96-127]", "96" },
+  { "file", 'f', 0, G_OPTION_ARG_STRING, &inputFile, "PCAP file as source", "./sample.pcap" },
   { "outputPath", 'o', 0, G_OPTION_ARG_STRING, &outputPath, "Path to inspector logs", "./inspector-logs" },
-  { "inputFile", 0, 0, G_OPTION_ARG_STRING, &inputFile, "PCAP file as source", "./sample.pcap" },
+  { "stdout", 0, 0, G_OPTION_ARG_NONE, &useStdout, "Send the inspector results to stdout", NULL },
   { NULL }
 };
 
@@ -127,17 +129,19 @@ bus_handler (GstBus * bus, GstMessage * message, gpointer data)
 void
 dump_frame_info (FILE *fdout , FrameInfo * ctx)
 {
-  log_info("[ pts:%" G_GUINT64_FORMAT ", frame: %u, keyframe: %u, showFrame: %u, refreshGoldenFrame: %u, refreshAltrefFrame: %u ]", 
-    GST_TIME_AS_MSECONDS(ctx->pts), ctx->frameNumber, ctx->keyframe, ctx->showFrame, ctx->refreshGoldenFrame, ctx->refreshAltrefFrame);
-
-  if (ctx->keyframe) {
-    log_info("[ width: %u, widthScale: %u, height: %u, heightScale: %u ]", 
-      ctx->resolution.width, ctx->resolution.widthScale, ctx->resolution.height, ctx->resolution.heightScale);
-  }
-
-  fprintf(fdout, "frameNumber: %u, pts: %" G_GUINT64_FORMAT ", isKeyframe: %u, show: %u, width: %u, height: %u, refreshGoldenFrame: %u, refreshAltrefFrame: %u \n",
+  gchar * result = g_strdup_printf(
+    "frameNumber: %u, pts: %" G_GUINT64_FORMAT ", isKeyframe: %u, show: %u, width: %u, height: %u, refreshGoldenFrame: %u, refreshAltrefFrame: %u \n",
     ctx->frameNumber, GST_TIME_AS_MSECONDS(ctx->pts), ctx->keyframe, ctx->showFrame,  ctx->resolution.width, ctx->resolution.height, 
     ctx->refreshGoldenFrame, ctx->refreshAltrefFrame);
+
+  if (useStdout) {
+    fprintf(stdout, "%s", result);
+    fflush(stdout);
+  }
+
+  fprintf(fdout, "%s", result);
+  fflush(fdout);
+  g_free(result);
 }
 
 static GstPadProbeReturn
