@@ -670,6 +670,13 @@ path-to-regexp@0.1.7:
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.7.tgz#df604178005f522f15eb4490e7247a1bfaa67f8c"
   integrity sha1-32BBeABfUi8V60SQ5yR6G/qmf4w=
 
+pick-port@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/pick-port/-/pick-port-1.0.0.tgz#8bfbc6ad6ca0d049c8d3a84f6c78d864cca3262d"
+  integrity sha512-8h9ShAAM5z691zpibEAIyQWiGjjxh5AsP62qI9ptceTDxsSy6bJEXxNpHmdFSwIVNtI2+k3DEhDX+1fYxFHHEA==
+  dependencies:
+    debug "^4.1.1"
+
 picomatch@^2.0.4, picomatch@^2.2.1:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.0.tgz#f1f061de8f6a4bf022892e2d128234fb98302972"

@@ -42,7 +42,7 @@ vp8_parse_frame_header(const unsigned char * data, const unsigned int len, Frame
   return VP8_CODEC_OK;
 }
 
-void
+int
 vp8_parse_segmentation_header(struct bool_decoder *bool)
 {      
   int segmentationEnabled = bool_get_bit(bool);
@@ -66,9 +66,10 @@ vp8_parse_segmentation_header(struct bool_decoder *bool)
       }
     }
   }
+  return VP8_CODEC_OK;
 }
 
-void
+int
 vp8_parse_loopfilter_header(struct bool_decoder * bool)
 {
   bool_get_bit(bool); // filter_type
@@ -83,16 +84,18 @@ vp8_parse_loopfilter_header(struct bool_decoder * bool)
     for (i = 0; i < BLOCK_CONTEXTS; i++)
       bool_maybe_get_int(bool, 6); // mb_mode_delta_update_flag + delta_magnitude + delta_sign
   }
+  return VP8_CODEC_OK;
 }
 
-void
+int
 vp8_parse_partitions(struct bool_decoder * bool)
 {
   // NOTE: we should compare the buffer data size with the partitions, because we can find a corrupted frame!
   bool_get_uint(bool, 2); // log2_nbr_of_dct_partitions
+  return VP8_CODEC_OK;
 }
 
-void
+int
 vp8_parse_quantizer_header(struct bool_decoder * bool)
 {
   bool_get_uint(bool, 7); // y_ac_qi
@@ -101,11 +104,13 @@ vp8_parse_quantizer_header(struct bool_decoder * bool)
   bool_maybe_get_int(bool, 4); // y2_ac_delta_q
   bool_maybe_get_int(bool, 4); // uv_dc_delta_q
   bool_maybe_get_int(bool, 4); // uv_ac_delta_q
+  return VP8_CODEC_OK;
 }
 
-void
+int
 vp8_parse_reference_header(struct bool_decoder * bool, FrameInfo * ctx)
 {
   ctx->refreshGoldenFrame = ctx->keyframe ? TRUE : bool_get_bit(bool);
   ctx->refreshAltrefFrame = ctx->keyframe ? TRUE : bool_get_bit(bool);
+  return VP8_CODEC_OK;
 }

@@ -3,10 +3,11 @@ import { types as mediasoupTypes } from 'mediasoup';
 import { Socket } from "socket.io";
 import { v4 as uuidv4 } from 'uuid';
 import { WebRTCPeer } from "./webrtc-peer";
+import { Inspector } from "./inspector";
 import { 
   RoomData, 
   UserData, 
-} from './types';
+} from '../types';
 
 const MAX_IDLE_TIME = 60000
 
@@ -14,6 +15,7 @@ export class Room extends EventEmitter {
   private readonly id: string;
   private readonly appData: object;
   private readonly router: mediasoupTypes.Router;
+  private readonly inspector: Inspector;
   private readonly transportOptions: mediasoupTypes.WebRtcTransportOptions;
   private readonly peers: Map<string, WebRTCPeer> = new Map();
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -26,6 +28,11 @@ export class Room extends EventEmitter {
     this.appData = appData;
     this.router = router;
     this.transportOptions = transportOptions;
+    this.inspector = new Inspector(router);
+  }
+
+  async load () : Promise<void> {
+    this.inspector.load();
   }
 
   close () : void {
@@ -41,6 +48,7 @@ export class Room extends EventEmitter {
     });
     this.peers.clear();
     this.router.close();
+    this.inspector.close();
   }
 
   getInfo () : RoomData {
@@ -59,7 +67,7 @@ export class Room extends EventEmitter {
 
   async addPeer (socket: Socket) : Promise<void> {
     const id = uuidv4();
-    const peer = new WebRTCPeer(id, socket, this.router, this.transportOptions);
+    const peer = new WebRTCPeer(id, socket, this.router, this.transportOptions, this.inspector);
 
     peer.on('disconnect', () => this.onPeerDisconnect(id));
     peer.on('ready', () => this.onPeerReady(id));

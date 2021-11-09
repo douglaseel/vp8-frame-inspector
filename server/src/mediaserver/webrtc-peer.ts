@@ -9,7 +9,9 @@ import {
   ProducerData,
   TransportConnectOptions,
   UserInitializeData,
-} from './types';
+} from '../types';
+
+import { Inspector } from "./inspector";
 
 export class WebRTCPeer extends EventEmitter {
   readonly id: string;
@@ -19,6 +21,7 @@ export class WebRTCPeer extends EventEmitter {
   private readonly transportOptions: mediasoupTypes.WebRtcTransportOptions;
   private readonly consumers: Map<string, mediasoupTypes.Consumer> = new Map();
   private readonly producers: Map<string, mediasoupTypes.Producer> = new Map();
+  private readonly inspector: Inspector;
   private recvTransport?: mediasoupTypes.WebRtcTransport;
   private sendTransport?: mediasoupTypes.WebRtcTransport;
   private rtpCapabilities?: mediasoupTypes.RtpCapabilities;
@@ -27,18 +30,19 @@ export class WebRTCPeer extends EventEmitter {
   private eventsPool: Event[] = [];
   private userData: any;
 
-
   constructor (
     id: string,
     socket: Socket,
     router: mediasoupTypes.Router,
-    transportOptions: mediasoupTypes.WebRtcTransportOptions
+    transportOptions: mediasoupTypes.WebRtcTransportOptions,
+    inspector: Inspector
   ) {
     super()
     this.id = id;
     this.socket = socket;
     this.router = router;
     this.transportOptions = transportOptions;
+    this.inspector = inspector;
 
     this.handleSocket()
   }
@@ -243,6 +247,10 @@ export class WebRTCPeer extends EventEmitter {
       fn(null, { id: producer.id })
 
       this.producers.set(producer.id, producer)
+
+      if (kind === 'video') {
+        await this.inspector.createConsumer(producer);
+      }
       
       this.emit('newProducer', { producer, rtpCapabilities: this.rtpCapabilities! })
       await producer.resume()

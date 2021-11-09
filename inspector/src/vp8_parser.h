@@ -50,8 +50,8 @@ typedef struct
 
 
 int vp8_parse_frame_header(const unsigned char * data, const unsigned int len, FrameInfo * ctx);
-void vp8_parse_segmentation_header(struct bool_decoder *bool);
-void vp8_parse_loopfilter_header(struct bool_decoder *bool);
-void vp8_parse_partitions(struct bool_decoder *bool);
-void vp8_parse_quantizer_header(struct bool_decoder *bool);
-void vp8_parse_reference_header(struct bool_decoder *bool, FrameInfo * ctx);
+int vp8_parse_segmentation_header(struct bool_decoder *bool);
+int vp8_parse_loopfilter_header(struct bool_decoder *bool);
+int vp8_parse_partitions(struct bool_decoder *bool);
+int vp8_parse_quantizer_header(struct bool_decoder *bool);
+int vp8_parse_reference_header(struct bool_decoder *bool, FrameInfo * ctx);

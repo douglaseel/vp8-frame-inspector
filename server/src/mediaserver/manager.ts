@@ -1,4 +1,5 @@
 import os from 'os';
+import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 import { createWorker, types as mediasoupTypes } from 'mediasoup';
 
@@ -18,6 +19,7 @@ export class Manager {
       const worker = await createWorker(workerSettings);
       this.workers.push(worker);
     }
+    await fs.mkdir(Settings.getInspectorOutputPath(), { recursive: true });
   }
 
   async createRoom (appData: object) : Promise<string> {
@@ -46,6 +48,8 @@ export class Manager {
 
     const transportOptions = { listenIps }
     const room = new Room(id, appData, router, transportOptions);
+
+    await room.load();
 
     this.rooms.set(id, room);
 
