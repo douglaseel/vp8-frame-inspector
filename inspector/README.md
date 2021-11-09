@@ -53,7 +53,7 @@ Application Options:
   --stdout                              Send the inspector results to stdout
 ```
 
-**IMPORTANT**: the path in `--outputPath` option should already exist and the user that will run the tool should have permission to write there. You must not add the `/` in the end of the path.
+**IMPORTANT**: the path in `--outputPath` option should already exist and the user should has write permission. You must not add the `/` in the end of the path.
 
 
 ### a. Realtime analysis
