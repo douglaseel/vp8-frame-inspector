@@ -37,3 +37,42 @@ body, #root {
 .roomName {
   color: blue;
 }
+
+.Room {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  flex-direction: column;
+
+  width: 100vw;
+  height: 100vh;
+  margin: 10px;
+}
+
+.localPeer {
+  border: 1px solid black;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.remotePeers {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: row;
+
+  flex-wrap: wrap;
+}
+
+.Peer {
+  border: 1px solid black;
+  padding: 10px;
+  margin-left: 2px;
+  margin-bottom: 2px;
+}
+
+.peerVideo {
+  width: 480px;
+  height: 360px;
+}

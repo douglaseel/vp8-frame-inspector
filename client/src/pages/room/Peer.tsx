@@ -9,7 +9,7 @@ export type UserViewProps = {
   }
 }
 
-function UserView({ id, audioTrack, videoTrack, userData } : UserViewProps) {
+function Peer({ id, audioTrack, videoTrack, userData } : UserViewProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -28,12 +28,12 @@ function UserView({ id, audioTrack, videoTrack, userData } : UserViewProps) {
   }, [ videoTrack ]);
   
   return (
-    <div>
+    <div className="Peer">
       <p>{userData?.username || id}</p>
-      <video ref={videoRef} autoPlay/>
+      <video ref={videoRef} className="peerVideo" autoPlay/>
       <audio ref={audioRef} autoPlay/>
     </div>
   );
 }
 
-export default UserView;
+export default Peer;

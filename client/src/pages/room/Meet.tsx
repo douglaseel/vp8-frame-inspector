@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { MediaServerClient } from '../../lib/mediaserver-client';
 import { UserData } from '../../lib/types';
 
-import UserView from './UserView';
+import Peer from './Peer';
 
 function Meet({ roomId, roomName, username } : { roomId: string, roomName: string, username: string }) {
 
@@ -147,28 +147,33 @@ function Meet({ roomId, roomName, username } : { roomId: string, roomName: strin
   }
 
   return (
-    <div>
+    <div className="Room">
       <h1>Room <span className="roomName">{roomName}</span></h1>
+      <div className="localPeer">
+        <h4>Local tracks</h4>
+        
+        <label>Microphone:
+          <input type="button" onClick={startMicStreaming} value="Start" disabled={!meetClientRef.current || !!micTrackId}/>
+          <input type="button" onClick={stopMicStreaming} value="Stop" disabled={!meetClientRef.current || !micTrackId}/>
+        </label>
 
-      <label>Microphone:
-        <input type="button" onClick={startMicStreaming} value="Start" disabled={!meetClientRef.current || !!micTrackId}/>
-        <input type="button" onClick={stopMicStreaming} value="Stop" disabled={!meetClientRef.current || !micTrackId}/>
-      </label>
+        <label>Webcam:
+          <input type="button" onClick={startWebcamStreaming} value="Start" disabled={!meetClientRef.current || !!webcamTrackId}/>
+          <input type="button" onClick={stopWebcamStreaming} value="Stop" disabled={!meetClientRef.current || !webcamTrackId}/>
+        </label>
+      </div>
 
-      <label>Webcam:
-        <input type="button" onClick={startWebcamStreaming} value="Start" disabled={!meetClientRef.current || !!webcamTrackId}/>
-        <input type="button" onClick={stopWebcamStreaming} value="Stop" disabled={!meetClientRef.current || !webcamTrackId}/>
-      </label>
-
-      { Array.from(availableUsers.values()).map(({ id, userData }) => (
-        <UserView
-          key={id}
-          id={id}
-          userData={userData}
-          audioTrack={audioTracks.get(id)}
-          videoTrack={videoTracks.get(id)}
-        />
-      ))}
+      <div className="remotePeers">
+        { Array.from(availableUsers.values()).map(({ id, userData }) => (
+          <Peer
+            key={id}
+            id={id}
+            userData={userData}
+            audioTrack={audioTracks.get(id)}
+            videoTrack={videoTracks.get(id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
