@@ -1,10 +1,16 @@
 # VP8 Frame Inspector
 
 The **inspector** is a CLI tool to extract some info about VP8 frames. 
-We can use it for realtime listening RTP packets and non-realtime analysis providing a PCAP file as input.
+It can be used for inspecting realtime or captured RTP VP8 data;
 
+The **inspector** basically does:
+  * Create a GStreamer pipeline that:
+    * receive the RTP data (from a UDP socket or PCPA file); and
+    * extract the VP8 frames from the RTP;
+  * Inspect each VP8 frame, extracting the desired info;
+  * Throws those info to files and stdout (if setted);
 
-## 1. Dependencies
+## Dependencies
 
 #### MacOS BigSur (Version 11.6, x86)
 
@@ -18,7 +24,7 @@ brew install make gcc gstreamer gst-plugins-base gst-plugins-good gst-plugins-ba
 sudo apt-get install make gcc libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-tools
 ```
 
-## 2. Build
+## Build
 
 ```
 make
@@ -27,7 +33,7 @@ make
 This command will build and create the binary that will be available at `out/inspector`.
 
 
-## 3. Use
+## Usage
 
 The **inspector** has a `--help` command that show all available options.]
 
@@ -42,8 +48,9 @@ Help Options:
 Application Options:
   -p, --port=50000                      Port to receive rtp stream
   -t, --payloadType=96                  Expected VP8 Payload Type [96-127]
-  -o, --outputPath=./inspector-logs     Path to inspector logs
-  --inputFile=./sample.pcap             PCAP file as source
+  -f, --file=./sample.pcap              PCAP file as source
+  -o, --outputPath=./inspector-results  Path to inspector results
+  --stdout                              Send the inspector results to stdout
 ```
 
 **IMPORTANT**: the path in `--outputPath` option should already exist and the user that will run the tool should have permission to write there. You must not add the `/` in the end of the path.
