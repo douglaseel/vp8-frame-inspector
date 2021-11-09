@@ -19,3 +19,18 @@ This repo is divided in two parts:
 
 ## Getting started
 
+
+## Next steps
+
+* Add automated tests;
+* Detect corrupted frames comparing the frame size with the partitions size;
+* Extract more info about the frame (ex: );
+* Evaluate how `packet loss` could affect the frame itself
+  * Probably we need to look `rtpvp8depay` code more deeper to better undestanding
+* Add RTSP support for realtime capture;
+* Add a filter options to capture only specific scenarios (ex.: corrupted frames, unsupported bitstream, etc);
+* Replace the current `vp8_parser` code to libvpx or similar (intel libva maybe?);
+* Add support for others video codecs like H264, VP9 and AV1;
+* Add support for IVF files (https://wiki.multimedia.cx/index.php/IVF);
+* Add `--stdin` flag to read the input data directly from stdin;
+* Transform that `server/src/inspector.ts` in one node module to simplify the integration with other solutions;
