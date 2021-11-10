@@ -17,7 +17,7 @@ The deps are:
 * `gcc`
 * `pkg-config`
 * `glib-2.0`
-* `gstreamer`, `gst-plugins-base`, `gst-plugins-good`, `gst-plugins-bad` and gstreamer dev package.
+* `gstreamer`, `gst-plugins-base`, `gst-plugins-good`, `gst-plugins-bad` and gstreamer dev package (>= 1.18.x).
 
 A few examples of installation:
 
@@ -30,7 +30,7 @@ brew install make gcc gstreamer gst-plugins-base gst-plugins-good gst-plugins-ba
 * Debian 11
 
 ```
-sudo apt-get install make gcc libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-tools
+sudo apt-get install make gcc libgstreamer1.0-0 libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-tools
 ```
 
 ## Build
