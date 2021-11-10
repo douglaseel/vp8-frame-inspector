@@ -83,7 +83,7 @@ The name of file should be the `<SSRC>.log`.
 
 ### 6. Check the RESULTS!
 
-The output format is specified (here)[inspector/README.md].
+The output format is specified [here](inspector/README.md).
 
 ## Next steps
 
