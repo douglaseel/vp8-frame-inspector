@@ -29,7 +29,7 @@ export class Server {
     const app = express();
     app.use(express.json());
 
-    app.post('/room', async (req, res) => {
+    app.post('/api/v1/room', async (req, res) => {
       try {
         const roomId = await this.manager.createRoom(req.body.appData);
         res.status(201).send({ roomId });
@@ -39,7 +39,7 @@ export class Server {
       }
     })
 
-    app.get('/rooms/:roomId', (req, res) => {
+    app.get('/api/v1/rooms/:roomId', (req, res) => {
       try {
         const roomId = req.params.roomId;
         const appData = this.manager.getRoomAppData(roomId);
@@ -56,7 +56,7 @@ export class Server {
 
   private configureSocketIOService () : void {
     const io = new SocketIO.Server(this.server, { 
-      path: '/ws',
+      path: '/api/v1/ws',
       pingInterval: 10000, 
       pingTimeout: 15000 
     });

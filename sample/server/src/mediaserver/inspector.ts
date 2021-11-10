@@ -45,7 +45,7 @@ export class Inspector extends EventEmitter {
       throw new Error('load() | inspector was already loaded');
     }
 
-    const command = `../inspector/out/inspector`;
+    const command = `../../inspector/out/inspector`;
     const args = [
       '--port', this.port!.toString(),
       '--payloadType', Settings.getVP8PayloadType().toString(),

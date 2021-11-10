@@ -1,4 +1,4 @@
-# My history decisions
+# My historic decisions
 
 This file describe the decisions taken to buid this project considering the timeline.
 
@@ -38,10 +38,13 @@ With the VP8 frame buffer in hands, the next step should be the most dangerous: 
 
 I try to look and undestand how I could use libvpx or similar to parse the VP8 headers, but with no success (maybe I should try again!).
 
-So I basically got the reference code (https://datatracker.ietf.org/doc/html/rfc6386), removed some things and use it only to get what I really nedeed.
+So I basically got the reference code (https://datatracker.ietf.org/doc/html/rfc6386), removed some things and used it only to get what I really nedeed.
 
 I need to add test vectors to validate if I did something very wrong or not with 100% of sure!
 
 Of course, it's very simple to check some headers info like keyframe, should show or not, resolution... 
 
-But the golden and intref refresh is in the middle of the header (that has not a fixed length).
+But the golden and intref refresh is in the middle of the header. And the header don't has a fixed size!
+
+
+## 
