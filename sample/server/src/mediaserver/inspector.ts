@@ -100,7 +100,7 @@ export class Inspector extends EventEmitter {
     });
   }
 
-  async createConsumer (producer: mediasoupTypes.Producer) : Promise<void> {
+  async createConsumer (producer: mediasoupTypes.Producer, displayName?: string) : Promise<void> {
     const rtpCapabilities: mediasoupTypes.RtpCapabilities = {
       codecs: Settings.getRouterOptions().mediaCodecs!.filter(codec => codec.mimeType === 'video/VP8'),
     };
@@ -111,6 +111,7 @@ export class Inspector extends EventEmitter {
       paused: true,
     });
 
+    console.log(`inspector:createConsumer() [displayName:${displayName}, ssrc:${consumer.rtpParameters!.encodings![0].ssrc}, trackId:${producer.id}]`);
     producer.observer.on('close', () => {
       consumer.close();
       this.consumers.delete(producer.id);

@@ -231,7 +231,7 @@ export class WebRTCPeer extends EventEmitter {
       this.producers.set(producer.id, producer);
 
       if (kind === 'video') {
-        await this.inspector.createConsumer(producer);
+        await this.inspector.createConsumer(producer, this.userData?.username);
       }
       
       this.emit('newProducer', { producer, rtpCapabilities: this.rtpCapabilities! });
