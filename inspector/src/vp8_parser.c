@@ -20,7 +20,7 @@ vp8_parse_frame_header(const unsigned char * data, const unsigned int len, Frame
   if (len <= ctx->partSize + (ctx->keyframe ? 10 : 3)) {
     return VP8_CODEC_CORRUPT_FRAME;
   }
-
+  
   if (ctx->keyframe) {
     /* Keyframe header consists of a three-byte sync code
     * followed by the width and height and associated scaling
