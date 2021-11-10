@@ -88,7 +88,7 @@ log_info (gchar *str, ...)
 /**
  * 
  * This function is called to dump the frame info.
- * It can dump to an output file (--outputPath option should be setted)
+ * It can dump to an output file (--outputPath option)
  * and/or stdout (--stdout option)
  * 
  * */
