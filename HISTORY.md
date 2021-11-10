@@ -1,4 +1,4 @@
-# My historic decisions
+# My historical decisions
 
 This file describe the decisions taken to buid this project considering the timeline.
 
@@ -14,10 +14,10 @@ Therefore I decided to get those VP8 frames from a RTP stream provided by some S
 I was never so deep into VP8 codec, so the first thing that I did was study the codec bitstream (https://datatracker.ietf.org/doc/html/rfc6386).
 
 The first and obviously conclusion that I had was: 
-  - I can't get the frame number and the presentation time looking to the VP8 bitstream, so I needed to get those info from the RTP receiver.
+  - I can't get the frame number and the presentation time looking to the VP8 bitstream, so I needed to get those info from my RTP receiver.
 
 
-So, considering that RTP seqnum and timestamp starts with random values and 1 frame propably will be contained in more than 1 RTP packet, I considered:
+Considering that RTP seqnum and timestamp starts with random values and 1 frame propably will be splitted in more than 1 RTP packet, I did some considerations:
   - The frame "0" will be the first frame received by the `inspector`;
   - The presentation timestamp will be relative to the first frame received, so, every analyzed stream will have the presentation timestamp equals to zero for the first receiver frame;
 
@@ -25,13 +25,13 @@ So, considering that RTP seqnum and timestamp starts with random values and 1 fr
 ## Extracting info from VP8 frame
 
 In the begining I tried to do a very simple and high level tool, using `node`. 
-I builded all GStreamer pipeline using `node-gtk` modules and everything worked until try to access the VP8 Frame buffer. 
-The problem was something like: I had the memory address from that buffer but how can I transform that into a node Buffer?
+I builded the GStreamer pipeline using `node-gtk` module and everything worked, until try to access the VP8 Frame buffer. 
+The problem was something like: `I had the memory address from that buffer but how can I transform this into a node Buffer?`
 
-So I decided to go back to my roots and replaced all `inspector` javascript code to C =)
+So I decided to go back to my roots and replaced all `inspector` javascript code to C. This decision has some benefits:
   - No GStreamer wrapper needed;
   - Easily access to GStreamer VP8 frame data;
-  - More easier to lead with bistreams too!
+  - More easier to lead with bistreams too;
 
 
 With the VP8 frame buffer in hands, the next step should be the most dangerous: parse the headers.
