@@ -89,7 +89,7 @@ The output format is specified (here)[inspector/README.md].
 
 The `inspector` is a tool under development so there are too many things to do, such as:
 
-* Add automated tests;
+* Add automated tests related to golden and altref frames;
 * Improve EOS treatment;
 * Detect corrupted frames comparing the frame size with the partitions size;
 * Improve performance (we can reuse FrameInfo for more than one frame, it'll avoid many `calloc`/`free` calls);

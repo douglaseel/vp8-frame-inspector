@@ -42,6 +42,12 @@ make
 This command will build and create the binary that will be available at `out/inspector`.
 
 
+## Run tests
+
+```
+make test
+```
+
 ## Usage
 
 You can exec `inspector --help` command to see all available options.
