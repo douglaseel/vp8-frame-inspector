@@ -118,7 +118,7 @@ export class MediaServerClient extends EventEmitter {
   stopTrack (trackId: string) : void {
     const producer = this.producers.get(trackId);
     if (!producer) {
-      throw new Error(`Track com id ${trackId} não existe`);
+      throw new Error(`Track ${trackId} doesn't exist`);
     }
     producer.close();
     this.producers.delete(trackId);
@@ -126,12 +126,9 @@ export class MediaServerClient extends EventEmitter {
   }
 
   async startConsumingTrack (id: string, trackId: string) : Promise<MediaStreamTrack> {
-    console.log('[startConsumingTrack] requisitando track');
+    console.log(`[startConsumingTrack] requesting for a track ${trackId} consumer`);
     let consumer = this.consumers.get(trackId);
     if (consumer) {
-      if (!consumer.paused) {
-        throw new Error(`Consumer da track com id ${trackId} já está sendo consumido!`);
-      }
       await this.emitAsync('resumeConsumer', { id, trackId });
       await consumer.resume();
     } else {
@@ -144,7 +141,7 @@ export class MediaServerClient extends EventEmitter {
   async stopConsumingTrack (trackId: string) : Promise<void> {
     const consumer = this.consumers.get(trackId);
     if (!consumer) {
-      throw new Error(`Consumer da track com id ${trackId} não existe!`);
+      throw new Error(`Track ${trackId} consumer doesn't exist!`);
     }
     await this.emitAsync('pauseConsumer', { trackId });
     await consumer.pause();
@@ -189,10 +186,8 @@ export class MediaServerClient extends EventEmitter {
     fn: Function
   ) : Promise<void> {
     try {
-      console.log('[onInitialize] inicializando peer');
-      console.log('[onInitialize] criando device');
+      console.log('[onInitialize] Initializing peer');
       this.device = new Device();
-      console.log('[onInitialize] carregando configurações no device');
       await this.device.load({ routerRtpCapabilities });
       await this.createTransports();
       fn(null, { rtpCapabilities: this.device.rtpCapabilities, userData: this.userData });
@@ -206,11 +201,11 @@ export class MediaServerClient extends EventEmitter {
   }
 
   private async createTransports () : Promise<void> {
-    console.log('[createTransports] criando camada de transporte para recebimento');
+    console.log('[createTransports] Creating recv transport!');
     await this.createRecvTransport();
-    console.log('[createTransports] criando camada de transporte para transmissão');
+    console.log('[createTransports] Creating send transport!');
     await this.createSendTransport();
-    console.log('[createTransports] camadas de transporte criadas com sucesso');
+    console.log('[createTransports] All transports were created with success!');
   }
 
   private async createRecvTransport () : Promise<void> {
@@ -231,7 +226,7 @@ export class MediaServerClient extends EventEmitter {
     errback: Function
   ) : Promise<void> {
     try {
-      console.log('[onRecvTransportConnect] conectando camada de transporte para recebimento');
+      console.log('[onRecvTransportConnect] Connecting recv transport!');
       await this.emitAsync('connectRecvTransport', { transportId: this.recvTransport!.id, dtlsParameters });
       callback();
     } catch (error) {
@@ -266,7 +261,7 @@ export class MediaServerClient extends EventEmitter {
     errback: Function
   ) : Promise<void> {
     try {
-      console.log('[createRecvTransport] conectando camada de transporte para transmissão');
+      console.log('[createSendTransport] Connecting send transport!');
       await this.emitAsync('connectSendTransport', { transportId: this.sendTransport!.id, dtlsParameters })
       callback();
     } catch (error) {
@@ -276,7 +271,7 @@ export class MediaServerClient extends EventEmitter {
 
   private async onNewProducer (producerData: ProducerData, callback: Function, errback: Function) {
     try {
-      console.log('[onNewProducer] novo "producer" criado')
+      console.log('[onNewProducer]', producerData)
       const { id } = await this.emitAsync('newProducer', {
         transportId   : this.sendTransport!.id,
         kind          : producerData.kind,
@@ -291,7 +286,7 @@ export class MediaServerClient extends EventEmitter {
   
   private async onNewConsumer (data: ConsumerData, fn: Function) : Promise<void> {
     try {
-      console.log('[onNewConsumer] criando consumer');
+      console.log('[onNewConsumer]', data);
       const consumer = await this.recvTransport!.consume({
         id            : data.consumerId,
         producerId    : data.producerId,

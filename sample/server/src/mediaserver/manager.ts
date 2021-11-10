@@ -86,7 +86,7 @@ export class Manager {
   private getRoom (roomId: string) : Room {
     const room = this.rooms.get(roomId)
     if (!room) {
-      throw new Error('Room does not exist!')
+      throw new Error('Room does not exist!');
     }
     return room;
   }

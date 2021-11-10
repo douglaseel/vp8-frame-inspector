@@ -42,7 +42,7 @@ export class Room extends EventEmitter {
     }
     
     this.closed = true;
-    console.log(`[destroy] Iniciando destruição da sala com id ${this.id}`)
+    console.log(`close() [roomId:${this.id}]`);
     this.clearIdleTimer();
     this.peers.forEach(peer => {
       peer.closeConnection();
@@ -88,11 +88,11 @@ export class Room extends EventEmitter {
   }
 
   private onPeerDisconnect (id: string) : void {
-    console.log(`[onPeerDisconnect] peer com id ${id} desconectou`)
-    this.peers.delete(id)
-    this.broadcastMessage('peerDisconnection', { id }, id)
+    console.log(`onPeerDisconnect() [id:${id}]`);
+    this.peers.delete(id);
+    this.broadcastMessage('peerDisconnection', { id }, id);
     if (!this.peers.size) {
-      this.restartIdleTimer()
+      this.restartIdleTimer();
     }
   }
 
@@ -103,8 +103,8 @@ export class Room extends EventEmitter {
   }
 
   private onPeerNewProducer (id: string, producer: mediasoupTypes.Producer) : void {
-    console.log(`[onPeerNewProducer] ${id} => criou um novo producer com trackId ${producer.id}`)
-    const trackId = producer.id
+    console.log(`onPeerNewProducer() [id:${id}, trackId:${producer.id}]`);
+    const trackId = producer.id;
     const availableTrack = { id, trackId, kind: producer.kind, customData: producer.appData };
     this.broadcastMessage('newTrackAvailable', availableTrack, id);
   }
@@ -124,11 +124,11 @@ export class Room extends EventEmitter {
     try {
       const remotePeer = this.peers.get(peerId);
       if (!remotePeer) {
-        throw new Error(`Peer ${peerId} que não existe`);
+        throw new Error(`Peer ${peerId} does not exist`);
       }
       const producer = remotePeer.getProducer({ trackId });
       if (!producer) {
-        throw new Error(`Peer ${peerId} não possui track ${trackId}`);
+        throw new Error(`Peer ${peerId} does not have track ${trackId}`);
       }
       const peer = this.peers.get(id);
       const rtpCapabilities = remotePeer.getRtpCapabilities();
@@ -137,11 +137,11 @@ export class Room extends EventEmitter {
         producer,
         rtpCapabilities,
         paused: paused || producer.paused,
-      })
-      fn(null)
+      });
+      fn(null);
     } catch (error) {
-      console.error(error)
-      fn(error)
+      console.error(error);
+      fn(error);
     }
   }
 
@@ -156,16 +156,16 @@ export class Room extends EventEmitter {
 
   private clearIdleTimer () {
     if (this.idleTimer) {
-      clearTimeout(this.idleTimer)
-      this.idleTimer = null
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
     }
   }
 
   private restartIdleTimer () {
     this.clearIdleTimer()
     this.idleTimer = setTimeout(() => {
-      console.log(`Sala com id ${this.id} atingiu o tempo de inatividade máximo`)
-      this.emit('maxIdleTimeExceeded')
-    }, MAX_IDLE_TIME)
+      console.log(`restartIdleTimer() | timeout [roomId:${this.id}]`);
+      this.emit('maxIdleTimeExceeded');
+    }, MAX_IDLE_TIME);
   }
 }

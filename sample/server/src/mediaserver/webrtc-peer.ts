@@ -112,15 +112,15 @@ export class WebRTCPeer extends EventEmitter {
   ) : Promise<void> {
     try {      
       // @ts-ignore
-      const { rtpCapabilities, userData } = await this.socket.emitAsync('initialize', { id: this.id, appData, routerRtpCapabilities, usersData})
+      const { rtpCapabilities, userData } = await this.socket.emitAsync('initialize', { id: this.id, appData, routerRtpCapabilities, usersData});
 
-      this.rtpCapabilities = rtpCapabilities
-      this.userData = userData
-      this.ready = true
-      this.emit('ready')
+      this.rtpCapabilities = rtpCapabilities;
+      this.userData = userData;
+      this.ready = true;
+      this.emit('ready');
 
-      console.log(`[initialize] ${this.id} => Inicializou e está pronto. Emitindo ${this.eventsPool.length} eventos acumulados`)
-      this.eventsPool.forEach(({ event, data }) => this.emitMessage(event, ...data))
+      console.log(`load() [id:${this.id}, eventsPool.length:${this.eventsPool.length}]`);
+      this.eventsPool.forEach(({ event, data }) => this.emitMessage(event, ...data));
       this.eventsPool = []
     } catch (error) {
       console.error(error)
@@ -142,22 +142,21 @@ export class WebRTCPeer extends EventEmitter {
     this.ready = false;
     this.sendTransport?.close();
     this.recvTransport?.close();
-    console.log(`[onDisconnect] ${this.id} => Desconectou!`);
+    console.log(`onDisconnect() [id:${this.id}]`);
     this.emit('disconnect');
   }
 
   private async onCreateRecvTransport (fn: Function) : Promise<void> {
     try {
-      console.log(`[onCreateRecvTransport] ${this.id} => Criando camada de transporte`)
-      this.recvTransport = await this.router.createWebRtcTransport(this.transportOptions)
-      console.log(`[onCreateRecvTransport] ${this.id} => Criou a camada de transporte`)
+      console.log(`onCreateRecvTransport() [id:${this.id}]`);
+      this.recvTransport = await this.router.createWebRtcTransport(this.transportOptions);
       
       this.recvTransport.observer.on('close', () => {
         this.consumers.forEach(consumer => {
           consumer.close();
         })
         this.consumers.clear();
-      })
+      });
       
       fn(null, {
         id             : this.recvTransport.id,
@@ -165,10 +164,10 @@ export class WebRTCPeer extends EventEmitter {
         iceCandidates  : this.recvTransport.iceCandidates,
         dtlsParameters : this.recvTransport.dtlsParameters,
         sctpParameters : this.recvTransport.sctpParameters
-      })
+      });
     } catch (error) {
-      console.error(error)
-      fn(error)
+      console.error(error);
+      fn(error);
     }
   }
 
@@ -177,17 +176,17 @@ export class WebRTCPeer extends EventEmitter {
     fn: Function
   ) : Promise<void> {
     try {
-      await this.recvTransport!.connect({ dtlsParameters })
-      fn(null)
+      await this.recvTransport!.connect({ dtlsParameters });
+      fn(null);
     } catch (error) {
-      fn(error)
+      fn(error);
     }
   }
 
   private async onCreateSendTransport (fn: Function) : Promise<void> {
     try {
-      console.log(`[onConnectSendTransport] ${this.id} => criando camada de transporte para transmissão`)
-      this.sendTransport = await this.router.createWebRtcTransport(this.transportOptions)
+      console.log(`onCreateSendTransport() [id:${this.id}]`);
+      this.sendTransport = await this.router.createWebRtcTransport(this.transportOptions);
       this.sendTransport.observer.on('close', async () => {
         this.producers.forEach(producer => {
           producer.close();
@@ -201,9 +200,9 @@ export class WebRTCPeer extends EventEmitter {
         iceCandidates  : this.sendTransport.iceCandidates,
         dtlsParameters : this.sendTransport.dtlsParameters,
         sctpParameters : this.sendTransport.sctpParameters
-      })
+      });
     } catch (error) {
-      fn(error)
+      fn(error);
     }
   }
 
@@ -212,11 +211,11 @@ export class WebRTCPeer extends EventEmitter {
     fn: Function
   ) : Promise<void> {
     try {
-      console.log(`[onConnectSendTransport] ${this.id} => conectando camada de transporte`)
-      await this.sendTransport!.connect({ dtlsParameters })
-      fn(null)
+      console.log(`onConnectSendTransport() [id:${this.id}]`);
+      await this.sendTransport!.connect({ dtlsParameters });
+      fn(null);
     } catch (error) {
-      fn(error)
+      fn(error);
     }
   }
 
@@ -225,42 +224,42 @@ export class WebRTCPeer extends EventEmitter {
     fn : Function
   ) {
     try {
-      console.log(`[onNewProducer] ${this.id} => criando novo producer`)
-      const producer = await this.sendTransport!.produce({ kind, rtpParameters, paused: true, appData })
-      fn(null, { id: producer.id })
+      console.log(`onNewProducer() [id:${this.id}]`);
+      const producer = await this.sendTransport!.produce({ kind, rtpParameters, paused: true, appData });
+      fn(null, { id: producer.id });
 
-      this.producers.set(producer.id, producer)
+      this.producers.set(producer.id, producer);
 
       if (kind === 'video') {
         await this.inspector.createConsumer(producer);
       }
       
-      this.emit('newProducer', { producer, rtpCapabilities: this.rtpCapabilities! })
-      await producer.resume()
+      this.emit('newProducer', { producer, rtpCapabilities: this.rtpCapabilities! });
+      await producer.resume();
     } catch (error) {
-      fn(error)
+      fn(error);
     }
   }
 
   private onProducerClosed (id: string) : void {
-    const producer = this.producers.get(id)
+    const producer = this.producers.get(id);
     if (producer) {
-      producer.close()
-      this.producers.delete(id)
+      producer.close();
+      this.producers.delete(id);
     }
   }
 
   private async onResumeProducer (id: string, fn: Function) : Promise<void> {
     try {
-      const producer = this.producers.get(id)
+      const producer = this.producers.get(id);
       if (!producer) {
-        throw new Error(`Producer com id ${id} não existe`)
+        throw new Error(`Producer ${id} does not exist!`);
       }
-      await producer.resume()
-      fn(null)
+      await producer.resume();
+      fn(null);
     } catch (error) {
-      console.error(error)
-      fn(error)
+      console.error(error);
+      fn(error);
     }
   }
 
@@ -272,12 +271,12 @@ export class WebRTCPeer extends EventEmitter {
     { id, trackId } : { id: string, trackId: string }, 
     fn: Function
   ) : void {
-    this.emit('consumeTrack', { peerId: id, trackId }, fn)
+    this.emit('consumeTrack', { peerId: id, trackId }, fn);
   }
 
   private onCloseConsumer (trackId: string, fn: Function) : void {
-    this.closeConsumer(trackId)
-    fn(null)
+    this.closeConsumer(trackId);
+    fn(null);
   }
 
   closeConsumer (trackId : string) : void {
@@ -288,7 +287,7 @@ export class WebRTCPeer extends EventEmitter {
   async createConsumer (
     { id, producer, paused, rtpCapabilities } : ConsumerData 
   ) : Promise<void> {  
-    console.log(`[createConsumer] ${this.id} => criando consumer do participante ${id}`);
+    console.log(`createConsumer() [id:${this.id}, userId:${id}, trackId:${producer.id}]`);
     const consumer = await this.recvTransport!.consume({
       producerId: producer.id,
       appData: producer.appData,
@@ -334,7 +333,7 @@ export class WebRTCPeer extends EventEmitter {
     if (this.ready) {
       this.socket.emit(event, ...data);
     } else {
-      console.log('[emitMessage] Peer ainda não está pronto. Armazenando evento', event, data);
+      console.log(`emitMessage() [event:${event}]`);
       this.eventsPool.push({ event, data });
     }
   }
@@ -342,13 +341,13 @@ export class WebRTCPeer extends EventEmitter {
   getProducer (
     { trackId } : { trackId: string }
   ) : mediasoupTypes.Producer | undefined {
-    return this.producers.get(trackId)
+    return this.producers.get(trackId);
   }
   
   getConsumer (
     { trackId } : { trackId: string }
   ) : mediasoupTypes.Consumer | undefined {
-    return this.consumers.get(trackId)
+    return this.consumers.get(trackId);
   }
 
   getUserData () : any {
@@ -369,6 +368,6 @@ export class WebRTCPeer extends EventEmitter {
   }
 
   isReady () : boolean {
-    return this.ready
+    return this.ready;
   }
 }

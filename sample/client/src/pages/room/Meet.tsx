@@ -22,7 +22,7 @@ function Meet({ roomId, roomName, username } : { roomId: string, roomName: strin
     const meetClient = new MediaServerClient(window.location.origin, roomId, { username });
 
     meetClient.on('connect', () => {
-      console.log('Conectou!');
+      console.log('Connected!');
     });
 
     meetClient.on('disconnect', () => {
