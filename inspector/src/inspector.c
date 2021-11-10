@@ -2,7 +2,7 @@
  * 
  * VP8 Frame Inspector
  * 
- * The inspector use GStreamer to receive RTP packets from 
+ * The inspector uses GStreamer to receive RTP packets from 
  * UDP socket or PCAP files and extract the VP8 frames 
  * from VP8 streams.
  * 
