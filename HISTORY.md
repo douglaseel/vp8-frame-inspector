@@ -36,15 +36,13 @@ So I decided to go back to my roots and replaced all `inspector` javascript code
 
 With the VP8 frame buffer in hands, the next step should be the most dangerous: parse the headers.
 
-I try to look and undestand how I could use libvpx or similar to parse the VP8 headers, but with no success (maybe I should try again!).
+I try to look and undestand how I could use libvpx or similar to parse the VP8 headers, but with no success (I should try again!).
 
 So I basically got the reference code (https://datatracker.ietf.org/doc/html/rfc6386), removed some things and used it only to get what I really nedeed.
 
-I need to add test vectors to validate if I did something very wrong or not with 100% of sure!
+Some info are pretty simple to check, like keyframe, show or not, resolution. 
 
-Of course, it's very simple to check some headers info like keyframe, should show or not, resolution... 
+However the golden and intref frames refresh are in the middle of the header that don't has a fixed size, so it's a little more complex.
 
-But the golden and intref refresh is in the middle of the header. And the header don't has a fixed size!
+So, to have 100% about our parser results we should add some automated tests in future.
 
-
-## 
