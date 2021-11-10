@@ -7,18 +7,26 @@ The `inspector` basically does:
   * Create a GStreamer pipeline that:
     * receive the RTP data (from a UDP socket or PCPA file); and
     * extract the VP8 frames from the RTP;
-  * Inspect each VP8 frame, extracting the desired info;
+  * Inspect each VP8 frame, extracting the desired info (according https://datatracker.ietf.org/doc/html/rfc6386);
   * Throws those info to files and stdout (if setted);
 
 ## Dependencies
 
-#### MacOS BigSur (Version 11.6, x86)
+The deps are:
+* `make`
+* `gcc`
+* `pkg-config`
+* `gstreamer`, `gst-plugins-base`, `gst-plugins-good`, `gst-plugins-bad` and gstreamer dev package.
+
+A few examples of installation:
+
+* MacOS BigSur (Version 11.6, x86)
 
 ```
 brew install make gcc gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-devtools
 ```
 
-#### Debian 11
+* Debian 11
 
 ```
 sudo apt-get install make gcc libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-tools
@@ -53,32 +61,30 @@ Application Options:
   --stdout                              Send the inspector results to stdout
 ```
 
-**IMPORTANT**: the path in `--outputPath` option should already exist and the user should has write permission. You must not add the `/` in the end of the path.
+**IMPORTANT**: the path in `--outputPath` option should already exist and the user should has write permission (don't add the `/` in the end of the path)
 
 
-### a. Realtime analysis
+### Realtime inspection
 
-When we use this command
+To inspect realtime streaming, you should use the `--port <PORT>` option to do the `inspector` listening for RTP packages in that port.
 
 ```
 $ ./out/inspector --port=<UDP_PORT> --payloadType=<VP8_PAYLOAD_TYPE> --outputPath=<PATH_TO_RESULTS>
 ```
 
-the `inspector` will listening the UDP `UDP_PORT` for RTP packets with the payload `VP8_PAYLOAD_TYPE`.
-For each new `SSRC` detected by `inspector` tool, a new file will be created with the results in the `PATH_TO_RESULTS` folder with `<SSRC>.log` name. 
-So, basically, we will have `N` files for `N` streams
+For each new `SSRC` detected by `inspector` tool, a new file will be created with the results in the `<PATH_TO_RESULTS>` folder with `<SSRC>.log` name. 
+So, basically, we will have `N` files for `N` streams.
 
 
-### b. PCAP analysis
+### PCAP inspection
 
-To inspect the VP8 frames for one or more streams in a PCAP file use:
+You also can use the `inspector` to inspect one or more VP8 streams in a PCAP file. To do it, use the `--file <PCAP_FILE>` option. See the example:
 
 ```
 $ ./out/inspector --file <PCAP_FILE> --payloadType=<VP8_PAYLOAD_TYPE> --outputPath=<PATH_TO_RESULTS>
 ```
 
-The result will be respect the same logic than realtime analysis.
-
+The results will be respect the same logic than the realtime inspection.
 
 
 ## Next steps

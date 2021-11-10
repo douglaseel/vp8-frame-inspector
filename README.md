@@ -11,12 +11,12 @@ This is a project about a simple VP8 Frame Inspector tool that can extract some 
 - This frame will modify the altref frame;
 
 
-This repo is divided in two folders parts:
+This repo is divided in two folders:
 
-- `inspector`: contains all inspector code and info about how to build and use it;
+- `inspector`: contains all `inspector` code, info about how to build and use it;
 - `sample`: contains the sample that shows how to use the `inspector` tool to inspect VP8 frames in realtime conferences using a very simple conference server based on `mediasoup`. This sample is divided into two parts:
   - `server`: a very simple conference service that uses `mediasoup`
-  - `client`: a VERY VERY VERY simple react app to interact with the server and do the meetings
+  - `client`: a VERY VERY VERY simple and **ugly** react app to interact with the server and do the meetings
 
 ## Getting started
 

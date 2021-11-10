@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/main.ts",
     "build": "rm -rf build/ && tsc",
-    "start": "node build/main.js",
-    "gst": "ts-node-dev --transpile-only --ignore-watch node_modules src/analyser/gst-sample.ts"
+    "start": "node build/main.js"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
