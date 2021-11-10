@@ -53,7 +53,7 @@ export class Settings {
   }
 
   static getInspectorOutputPath () : string {
-    return '../../inspector-logs/';
+    return '../../inspector-results';
   }
 }
 

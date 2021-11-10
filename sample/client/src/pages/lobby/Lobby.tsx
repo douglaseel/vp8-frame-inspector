@@ -12,7 +12,7 @@ function Lobby () {
   
     const roomName = inputRef.current?.value;
     const body = JSON.stringify({ appData: { name: roomName }} )
-    const res = await fetch('/room', { 
+    const res = await fetch('/api/v1/room', { 
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body 

@@ -14,7 +14,7 @@ function Room() {
   useEffect(() => {
     const fetchAppData = async () => {
       try {
-        const res = await fetch(`/rooms/${roomId}`);
+        const res = await fetch(`/api/v1/rooms/${roomId}`);
         if (res.status !== 200) {
           throw new Error('Invalid status code');
         }

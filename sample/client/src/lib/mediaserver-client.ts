@@ -31,7 +31,7 @@ export class MediaServerClient extends EventEmitter {
   initializeSocket () : void {
     const url = new URL(this.url);
     this.socket = io(url.origin, { 
-      path: `/ws`, 
+      path: `/api/v1/ws`, 
       query: {
         roomId: this.roomId
       },
