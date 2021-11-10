@@ -39,7 +39,7 @@ sudo apt-get install make gcc libgstreamer1.0-0 libgstreamer1.0-dev gstreamer1.0
 make
 ```
 
-This command will build and create the binary that will be available at `out/inspector`.
+This command will build and create the binary that should be available at `out/inspector`.
 
 
 ## Run tests
