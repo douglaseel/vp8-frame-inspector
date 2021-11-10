@@ -1,3 +1,25 @@
+/**
+ * 
+ * VP8 Frame Inspector
+ * 
+ * The inspector use GStreamer to receive RTP packets from 
+ * UDP socket or PCAP files and extract the VP8 frames 
+ * from VP8 streams.
+ * 
+ * We are using a very simple parser to extract VP8 frame 
+ * header info based on the example in the specification 
+ * (https://github.com/webmproject/bitstream-guide).
+ * 
+ * 
+ * How it works?
+ * 
+ * The main pipeline contains a rtpbin module that detects new SSRC. 
+ * So for each SSRC detected with the specified payload type, we create a new
+ * bin containing the rtpvp8depay part. After we got the frames we process 
+ * them to extract the desided data.
+ * 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +85,13 @@ log_info (gchar *str, ...)
   g_free(info);
 }
 
+/**
+ * 
+ * This function is called to dump the frame info.
+ * It can dump to an output file (--outputPath option should be setted)
+ * and/or stdout (--stdout option)
+ * 
+ * */
 void
 dump_frame_info (StreamInspector * streamInspector , FrameInfo * ctx)
 {
@@ -84,6 +113,13 @@ dump_frame_info (StreamInspector * streamInspector , FrameInfo * ctx)
   g_free(result);
 }
 
+/**
+ * 
+ * This function is called when we got a VP8 frame.
+ * We read the frame header according https://datatracker.ietf.org/doc/html/draft-bankoski-vp8-bitstream-06 
+ * and https://github.com/webmproject/bitstream-guide to find all desired info.
+ * 
+ **/
 void
 inspect_frame_info(StreamInspector * streamInspector, unsigned char * data, unsigned int size, GstClockTime timestamp)
 {
@@ -146,6 +182,12 @@ inspect_frame_info(StreamInspector * streamInspector, unsigned char * data, unsi
   free(ctx);
 }
 
+
+/**
+ *
+ * This function is called to initialize a StreamInspector struct
+ *  
+ **/
 StreamInspector *
 stream_inspector_initialize (gchar * padName) {
   log_info("stream_inspector_initialize [padName: %s]", padName);
@@ -177,6 +219,14 @@ stream_inspector_initialize (gchar * padName) {
   return streamInspector;
 }
 
+/**
+ * 
+ * This function is called to handle with SIGINT
+ * We are stopping the process here, but we
+ * should have sure that all buffers were processed.
+ * We can improve it in the future.
+ * 
+ */
 gboolean
 signal_handler (gpointer data)
 {
@@ -186,6 +236,12 @@ signal_handler (gpointer data)
   return TRUE;
 }
 
+/**
+ *
+ * This function is called to lead with some pipeline messages.
+ * We wait for some messages to exec the pipeline cleaning for example.
+ * 
+ */
 static gboolean
 bus_handler (GstBus * bus, GstMessage * message, gpointer data)
 {
@@ -241,6 +297,13 @@ bus_handler (GstBus * bus, GstMessage * message, gpointer data)
   return TRUE;
 }
 
+/**
+ * 
+ * This function is called when we have a VP8 Frame available.
+ * Here we use the GstBuffer PTS as the frame presentation time (minus the start offset).
+ * The Frame buffer should be processed by the inspect_frame_info() function.
+ *
+ */
 static GstPadProbeReturn
 buffer_probe(GstPad * pad, GstPadProbeInfo * info, gpointer data)
 { 
@@ -263,6 +326,13 @@ buffer_probe(GstPad * pad, GstPadProbeInfo * info, gpointer data)
   return GST_PAD_PROBE_HANDLED;
 }
 
+/**
+ * 
+ * This function is called when some SSRC becomes inactive,
+ * so we send an EOS event to flush all buffered data and 
+ * remove it from our HashTable.
+ * 
+ */
 static void
 on_pad_removed (GstElement * rtpbin, GstPad * pad, Inspector * inspector)
 {   
@@ -282,6 +352,24 @@ on_pad_removed (GstElement * rtpbin, GstPad * pad, Inspector * inspector)
   }
 }
 
+/**
+ * 
+ * This function is called when rtpbin detects a new SSRC.
+ * We are using the padName as key of our HashTable.
+ * 
+ * For each new SSRC we basically build a new bin with
+ * a queue and a rtpvp8depay element to receive
+ * and lead with the RTP data.
+ * 
+ * To get the VP8 frames, we put a PROBE at "src" (or output)
+ * pad from rtpvp8depay module. The VP8 frames are collected
+ * in buffer_probe() function.
+ * 
+ * So basically we are using rtpbin to lead with the
+ * RTP scenarios (packet loss, misordering, jitter) and
+ * rtpvp8depay to put all packets frame together!
+ * 
+ * */
 static void
 on_pad_added (GstElement * rtpbin, GstPad * new_pad, gpointer data)
 {
@@ -327,6 +415,13 @@ on_pad_added (GstElement * rtpbin, GstPad * new_pad, gpointer data)
   g_hash_table_insert(inspector->streams, padName, streamInspector);
 }
 
+/** 
+ * 
+ * This function is called for rtpbin to get the correct caps
+ * from the payloadType detected. So you need to use --payloadType
+ * to set the correct expected VP8 payload type.
+ * 
+*/
 static GstCaps *
 on_request_pt_map (GstElement * rtpbin, guint session_id, guint pt, gpointer user_data)
 {
@@ -337,6 +432,13 @@ on_request_pt_map (GstElement * rtpbin, guint session_id, guint pt, gpointer use
   return caps;
 }
 
+
+/**
+ * 
+ * This function is called to return the input from the inspector.
+ * It can be a pcap file or a realtime UDP source.
+ * 
+ */
 GstElement *
 get_rtp_source ()
 {
@@ -366,6 +468,20 @@ get_rtp_source ()
   return udpsrc;
 }
 
+
+/**
+ * 
+ * This function create the basic GStreamer pipeline. 
+ * This pipeline should be different according the used options:
+ * 
+ * (--port) => (udpsrc ! rtpbin)
+ * (--file) => (filesrc ! pcapparse ! rtpbin)
+ * 
+ * It's important to remember that the others gst elements should be created 
+ * dinamically when rtpbin detect a new SSRC. Pay attention at the on_pad_added() 
+ * function!
+ * 
+ * */
 Inspector* 
 create_pipeline () 
 {
@@ -375,6 +491,8 @@ create_pipeline ()
 
   inspector->rtpsrc = get_rtp_source();
   inspector->rtpbin = gst_element_factory_make("rtpbin", NULL);
+
+  /* Setting "autoremove" option to clean our pipeline when some SSRC was inactived */
   g_object_set(inspector->rtpbin, "autoremove", TRUE, NULL);
   g_signal_connect(inspector->rtpbin, "request-pt-map", G_CALLBACK (on_request_pt_map), inspector);
   g_signal_connect(inspector->rtpbin, "pad-added", G_CALLBACK (on_pad_added), inspector);
@@ -386,6 +504,7 @@ create_pipeline ()
     exit(ERROR_PIPELINE_LINK);
   }
 
+  /* This HashTable is resposible by the SSRC/GstBin references */
   inspector->streams = g_hash_table_new(g_str_hash, g_str_equal);
   return inspector;
 }
@@ -397,7 +516,7 @@ main (int argc, char *argv[])
   GOptionContext * context = g_option_context_new("- VP8 Frame Inspector");
   g_option_context_add_main_entries(context, entries, NULL);
   if (!g_option_context_parse(context, &argc, &argv, &error)) {
-    log_info("main: failed to parse the arguments");
+    log_info("Failed to parse the arguments");
     exit(ERROR_PARSE_ARGS);
   }
 
@@ -406,6 +525,7 @@ main (int argc, char *argv[])
     exit(ERROR_INVALID_ARGS);
   }
 
+  /* The payload type should be in the dynamic range */
   if (payloadType < 96 || payloadType > 127) {
     log_info("PayloadType out of range %i [96-127]", payloadType);
     exit(ERROR_INVALID_ARGS);
@@ -414,6 +534,8 @@ main (int argc, char *argv[])
   /* Initialize GStreamer */
   gst_init (&argc, &argv);
   log_info("Initializing VP8 Frame Inspector");
+
+  /* Here is where we create the "basic" GStreamer pipeline */
   Inspector *inspector = create_pipeline();
 
   GstBus *bus = gst_element_get_bus(inspector->pipeline);  
@@ -425,7 +547,8 @@ main (int argc, char *argv[])
   
   inspector->loop = g_main_loop_new(NULL, FALSE);
 
-  log_info("Confinguring the signal handler");
+  /* Adding a signal handle to handle SIGINT*/
+  log_info("Adding the signal handler");
   g_unix_signal_add(SIGINT, signal_handler, inspector);
 
   log_info("Starting VP8 Frame Inspector");
