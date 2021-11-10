@@ -46,6 +46,3 @@ However the golden and intref frames refresh are in the middle of the header tha
 
 So, to have 100% about our parser results we should add some automated tests in future.
 
-
-## Output format
-
