@@ -9,7 +9,7 @@ import {
   UserData, 
 } from '../types';
 
-const MAX_IDLE_TIME = 60000
+const MAX_IDLE_TIME = 600000
 
 export class Room extends EventEmitter {
   private readonly id: string;
