@@ -35,6 +35,7 @@ typedef struct {
 
 typedef struct
 {
+  gboolean ok;
   gboolean keyframe;
   guint version;
   gboolean isExperimental;
@@ -49,9 +50,9 @@ typedef struct
 } FrameInfo;
 
 
-int vp8_parse_frame_header(const unsigned char * data, const unsigned int len, FrameInfo * ctx);
-int vp8_parse_segmentation_header(struct bool_decoder *bool);
-int vp8_parse_loopfilter_header(struct bool_decoder *bool);
-int vp8_parse_partitions(struct bool_decoder *bool);
-int vp8_parse_quantizer_header(struct bool_decoder *bool);
-int vp8_parse_reference_header(struct bool_decoder *bool, FrameInfo * ctx);
+guint vp8_parse_frame_header(const unsigned char * data, const unsigned int len, FrameInfo * ctx);
+guint vp8_parse_segmentation_header(struct bool_decoder *bool);
+guint vp8_parse_loopfilter_header(struct bool_decoder *bool);
+guint vp8_parse_partitions(struct bool_decoder *bool);
+guint vp8_parse_quantizer_header(struct bool_decoder *bool);
+guint vp8_parse_reference_header(struct bool_decoder *bool, FrameInfo * ctx);

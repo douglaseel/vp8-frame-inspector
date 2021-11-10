@@ -20,7 +20,7 @@ This repo is divided in two folders:
 
 ## Getting started
 
-This repo has a few docs, so we recommend you to read some docs before continue:
+This repo has a few more docs, we recommend that you read them before continue:
 
 1. `inspector` documentation (see [here](inspector/README.md))
 2. `server` sample documentation (see [here](sample/server/README.md))
@@ -74,22 +74,25 @@ The client should be up in the port `3000` or other (if anyone is already listen
 
 Inside a meeting you can start your webcam streaming. When you do it, the SFU will receive your RTP packets and send them to the `inspector` tool.
 
-You propably will note that a folder called `inspector-results` was created in the project root folder. 
+You propably will note that a folder called `inspector-results` will be created in the project root folder. 
 Inside this folder you will see one file per video streaming using VP8.
 
 The name of file should be the `<SSRC>.log`.
 
-**NOTE:** the `ssrc` used in the rtp consumed is different from the produced in the browser because mediasoup does it. 
+**IMPORTANT:** the `ssrc` used in the rtp consumed is different from the produced in the browser because mediasoup does it. 
 
 ### 6. Check the RESULTS!
 
+The output format is specified (here)[inspector/README.md].
 
 ## Next steps
 
 The `inspector` is a tool under development so there are too many things to do, such as:
 
 * Add automated tests;
+* Improve EOS treatment;
 * Detect corrupted frames comparing the frame size with the partitions size;
+* Improve performance (we can reuse FrameInfo for more than one frame, it'll avoid many `calloc`/`free` calls);
 * Extract more info about the frame;
 * Evaluate how `packet loss` could affect the frame itself
   * Probably we need to look `rtpvp8depay` code more deeper to better undestanding

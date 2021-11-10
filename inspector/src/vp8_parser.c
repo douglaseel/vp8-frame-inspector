@@ -1,8 +1,8 @@
 #include "bool_decoder.h"
 #include "vp8_parser.h"
 
-int
-vp8_parse_frame_header(const unsigned char * data, const unsigned int len, FrameInfo * frameCtx)
+guint
+vp8_parse_frame_header(const unsigned char * data, const unsigned int len, FrameInfo * ctx)
 {
   guint tmp;
 
@@ -12,16 +12,16 @@ vp8_parse_frame_header(const unsigned char * data, const unsigned int len, Frame
 
   tmp = (data[2] << 16) | (data[1] << 8) | data[0];
 
-  frameCtx->keyframe = !(tmp & 0x1);
-  frameCtx->version = (tmp >> 1) & 0x7;
-  frameCtx->showFrame = (tmp >> 4) & 0x1;
-  frameCtx->partSize = (tmp >> 5) & 0x7FFFF;
+  ctx->keyframe = !(tmp & 0x1);
+  ctx->version = (tmp >> 1) & 0x7;
+  ctx->showFrame = (tmp >> 4) & 0x1;
+  ctx->partSize = (tmp >> 5) & 0x7FFFF;
 
-  if (len <= frameCtx->partSize + (frameCtx->keyframe ? 10 : 3)) {
+  if (len <= ctx->partSize + (ctx->keyframe ? 10 : 3)) {
     return VP8_CODEC_CORRUPT_FRAME;
   }
 
-  if (frameCtx->keyframe) {
+  if (ctx->keyframe) {
     /* Keyframe header consists of a three-byte sync code
     * followed by the width and height and associated scaling
     * factors.
@@ -31,18 +31,18 @@ vp8_parse_frame_header(const unsigned char * data, const unsigned int len, Frame
     }
 
     tmp = (data[7] << 8) | data[6];
-    frameCtx->resolution.width = tmp & 0x3FFF;
-    frameCtx->resolution.widthScale = tmp >> 14;
+    ctx->resolution.width = tmp & 0x3FFF;
+    ctx->resolution.widthScale = tmp >> 14;
 
     tmp = (data[9] << 8) | data[8];
-    frameCtx->resolution.height = tmp & 0x3FFF;
-    frameCtx->resolution.heightScale = tmp >> 14;
+    ctx->resolution.height = tmp & 0x3FFF;
+    ctx->resolution.heightScale = tmp >> 14;
   }
 
   return VP8_CODEC_OK;
 }
 
-int
+guint
 vp8_parse_segmentation_header(struct bool_decoder *bool)
 {      
   int segmentationEnabled = bool_get_bit(bool);
@@ -69,7 +69,7 @@ vp8_parse_segmentation_header(struct bool_decoder *bool)
   return VP8_CODEC_OK;
 }
 
-int
+guint
 vp8_parse_loopfilter_header(struct bool_decoder * bool)
 {
   bool_get_bit(bool); // filter_type
@@ -87,7 +87,7 @@ vp8_parse_loopfilter_header(struct bool_decoder * bool)
   return VP8_CODEC_OK;
 }
 
-int
+guint
 vp8_parse_partitions(struct bool_decoder * bool)
 {
   // NOTE: we should compare the buffer data size with the partitions, because we can find a corrupted frame!
@@ -95,7 +95,7 @@ vp8_parse_partitions(struct bool_decoder * bool)
   return VP8_CODEC_OK;
 }
 
-int
+guint
 vp8_parse_quantizer_header(struct bool_decoder * bool)
 {
   bool_get_uint(bool, 7); // y_ac_qi
@@ -107,7 +107,7 @@ vp8_parse_quantizer_header(struct bool_decoder * bool)
   return VP8_CODEC_OK;
 }
 
-int
+guint
 vp8_parse_reference_header(struct bool_decoder * bool, FrameInfo * ctx)
 {
   ctx->refreshGoldenFrame = ctx->keyframe ? TRUE : bool_get_bit(bool);

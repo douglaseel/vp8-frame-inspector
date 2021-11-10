@@ -170,11 +170,9 @@ export class Inspector extends EventEmitter {
     // We ignore the last element for message.
     message
       .split('\n')
-      .slice(0, -1)
       .forEach(msg => {
         try {
-          const { event, data } = JSON.parse(msg);
-          switch (event) {
+          switch (msg) {
             case 'ready':
               return this.onReady();
             default:

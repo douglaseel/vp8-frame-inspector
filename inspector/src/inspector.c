@@ -20,6 +20,7 @@ typedef struct
   GstElement *bin;
   GstClockTime ptsOffset;
   guint frameNumber;
+  FrameResolution lastResolution;
   FILE *fdout;
 } StreamInspector;
 
@@ -62,17 +63,126 @@ log_info (gchar *str, ...)
   g_free(info);
 }
 
+void
+dump_frame_info (StreamInspector * streamInspector , FrameInfo * ctx)
+{
+  gchar * result = g_strdup_printf(
+    "ssrc: %s, frame: %u, pts: %" G_GUINT64_FORMAT ", ok: %u, keyframe: %u, show: %u, width: %u, height: %u, refreshGoldenFrame: %u, refreshAltrefFrame: %u \n",
+    streamInspector->ssrc, ctx->frameNumber, GST_TIME_AS_MSECONDS(ctx->pts), ctx->ok, ctx->keyframe, ctx->showFrame,  
+    ctx->resolution.width, ctx->resolution.height, ctx->refreshGoldenFrame, ctx->refreshAltrefFrame);
+
+  if (useStdout) {
+    fprintf(stdout, "%s", result);
+    fflush(stdout);
+  }
+
+  if (outputPath) {
+    fprintf(streamInspector->fdout, "%s", result);
+    fflush(streamInspector->fdout);
+  }
+
+  g_free(result);
+}
+
+void
+inspect_frame_info(StreamInspector * streamInspector, unsigned char * data, unsigned int size, GstClockTime timestamp)
+{
+  struct bool_decoder bool;
+  FrameInfo * ctx = calloc(1, 1 * sizeof(FrameInfo));
+
+  ctx->ok = FALSE;
+  ctx->pts = timestamp;
+  ctx->frameNumber = streamInspector->frameNumber++;
+
+  if (vp8_parse_frame_header(data, size, ctx)) goto dump_frame;
+
+  data += FRAME_HEADER_SZ;
+  size -= FRAME_HEADER_SZ;
+  if (ctx->keyframe)
+  {
+    data += KEYFRAME_HEADER_SZ;
+    size -= KEYFRAME_HEADER_SZ;
+  }
+
+  if (ctx->keyframe) {
+    streamInspector->lastResolution.width = ctx->resolution.width;
+    streamInspector->lastResolution.widthScale = ctx->resolution.widthScale;
+    streamInspector->lastResolution.height = ctx->resolution.height;
+    streamInspector->lastResolution.heightScale = ctx->resolution.heightScale;
+  } else {      
+    ctx->resolution.width = streamInspector->lastResolution.width;
+    ctx->resolution.widthScale = streamInspector->lastResolution.widthScale;
+    ctx->resolution.height = streamInspector->lastResolution.height;
+    ctx->resolution.heightScale = streamInspector->lastResolution.heightScale;
+  }
+
+  init_bool_decoder(&bool, data, ctx->partSize);
+
+  /* Skip the colorspace and clamping bits */
+  if (ctx->keyframe) {
+    bool_get_uint(&bool, 2);
+  }
+
+  if (vp8_parse_segmentation_header(&bool)) 
+    goto dump_frame;
+  
+  if (vp8_parse_loopfilter_header(&bool)) 
+    goto dump_frame;
+
+  if (vp8_parse_partitions(&bool)) 
+    goto dump_frame;
+
+  if (vp8_parse_quantizer_header(&bool)) 
+    goto dump_frame;
+
+  if (vp8_parse_reference_header(&bool, ctx)) 
+    goto dump_frame;
+
+  ctx->ok = TRUE;
+  
+  dump_frame:
+
+  dump_frame_info(streamInspector, ctx);
+  free(ctx);
+}
+
+StreamInspector *
+stream_inspector_initialize (gchar * padName) {
+  log_info("stream_inspector_initialize [padName: %s]", padName);
+
+  StreamInspector * streamInspector = (StreamInspector *) malloc(1 * sizeof(StreamInspector));
+  gchar **split = g_strsplit(padName, "_", 0);
+  gchar *ssrc = split[4];
+
+  streamInspector->bin = gst_bin_new(NULL);
+  streamInspector->ssrc = g_strdup_printf("%s", ssrc);
+  streamInspector->ptsOffset = 0;
+  streamInspector->frameNumber = 0;
+  streamInspector->lastResolution.width = 0;
+  streamInspector->lastResolution.widthScale = 0;
+  streamInspector->lastResolution.height = 0;
+  streamInspector->lastResolution.heightScale = 0;
+  streamInspector->fdout = NULL;
+
+  g_object_set(streamInspector->bin, "message-forward", TRUE, NULL);
+
+
+  if (outputPath) {
+    gchar * filename = g_strdup_printf("%s/%s.log", outputPath, ssrc);
+    streamInspector->fdout = fopen(filename, "w");
+    g_free(filename);
+  }
+
+  g_strfreev(split);
+  return streamInspector;
+}
+
 gboolean
 signal_handler (gpointer data)
 {
   Inspector * inspector = (Inspector *)data;
-  if (!inspector->closing) {
-    log_info("signal_handler: received a SIGINT, emitting EOS event to pipeline");
-    gst_element_send_event(inspector->pipeline, gst_event_new_eos ());
-    inspector->closing = TRUE;
-  } else {
-    g_main_loop_quit(inspector->loop);
-  }
+  log_info("signal_handler: received a SIGINT, emitting EOS event to pipeline");
+  g_main_loop_quit(inspector->loop);
   return TRUE;
 }
 
@@ -99,6 +209,11 @@ bus_handler (GstBus * bus, GstMessage * message, gpointer data)
             GstElement * bin = GST_ELEMENT(GST_MESSAGE_SRC(message));            
             gst_element_set_state(bin, GST_STATE_NULL);
             gst_bin_remove(GST_BIN(inspector->pipeline), bin); 
+
+            // TODO: remove this workaround in future
+            if (inputFile) {
+              g_main_loop_quit(inspector->loop);
+            }
           }
           gst_message_unref (forwardMessage);
         }
@@ -112,7 +227,7 @@ bus_handler (GstBus * bus, GstMessage * message, gpointer data)
         gst_message_parse_state_changed (message, &old, &new, &pending);
         if (new == GST_STATE_PLAYING && inspector->ready == FALSE) {
           log_info("VP8 Frame Inspector is ready!");
-          fprintf(stdout, "{ \"event\": \"ready\" }\n");
+          fprintf(stdout, "ready\n");
           fflush(stdout);
           inspector->ready = TRUE;
         }
@@ -126,106 +241,27 @@ bus_handler (GstBus * bus, GstMessage * message, gpointer data)
   return TRUE;
 }
 
-void
-dump_frame_info (FILE *fdout , FrameInfo * ctx)
-{
-  gchar * result = g_strdup_printf(
-    "frameNumber: %u, pts: %" G_GUINT64_FORMAT ", isKeyframe: %u, show: %u, width: %u, height: %u, refreshGoldenFrame: %u, refreshAltrefFrame: %u \n",
-    ctx->frameNumber, GST_TIME_AS_MSECONDS(ctx->pts), ctx->keyframe, ctx->showFrame,  ctx->resolution.width, ctx->resolution.height, 
-    ctx->refreshGoldenFrame, ctx->refreshAltrefFrame);
-
-  if (useStdout) {
-    fprintf(stdout, "%s", result);
-    fflush(stdout);
-  }
-
-  fprintf(fdout, "%s", result);
-  fflush(fdout);
-  g_free(result);
-}
-
 static GstPadProbeReturn
 buffer_probe(GstPad * pad, GstPadProbeInfo * info, gpointer data)
 { 
   GstMapInfo map;
   GstBuffer * buffer = gst_pad_probe_info_get_buffer(info);
   StreamInspector * streamInspector = (StreamInspector*) data;
-  //if (!GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
-    GstClockTime bufferTimestamp = GST_BUFFER_DTS_OR_PTS(buffer);
-    // NOTE: The buffer clock time is relative to pipeline start time, so we are marking the offset
-    if (streamInspector->ptsOffset == 0) {
-      streamInspector->ptsOffset = bufferTimestamp;
-    }
 
-    GstClockTime timestamp = bufferTimestamp - streamInspector->ptsOffset;
-    int res = gst_buffer_map(buffer, &map, GST_MAP_READ);
-    if (res) {
-      FrameInfo frameCtx;
-      struct bool_decoder bool;
+  GstClockTime bufferTimestamp = GST_BUFFER_DTS_OR_PTS(buffer);
+  // NOTE: The buffer clock time is relative to pipeline start time, so we are marking the offset
+  if (streamInspector->ptsOffset == 0) {
+    streamInspector->ptsOffset = bufferTimestamp;
+  }
 
-      FrameInfo * ctx = &frameCtx;
+  GstClockTime timestamp = bufferTimestamp - streamInspector->ptsOffset;
+  int res = gst_buffer_map(buffer, &map, GST_MAP_READ);
+  if (res) {
+    inspect_frame_info(streamInspector, map.data, map.size, timestamp);
+  }
 
-      memset(&frameCtx, 0, sizeof(frameCtx));
-
-      ctx->pts = timestamp;
-      ctx->frameNumber = streamInspector->frameNumber++;
-
-      unsigned char * data = map.data;
-      unsigned int size = map.size;
-
-      // initialize
-      vp8_parse_frame_header(data, size, ctx);
-
-      data += FRAME_HEADER_SZ;
-      size -= FRAME_HEADER_SZ;
-      if (ctx->keyframe)
-      {
-        data += KEYFRAME_HEADER_SZ;
-        size -= KEYFRAME_HEADER_SZ;
-      }
-
-      init_bool_decoder(&bool, data, ctx->partSize);
-
-      /* Skip the colorspace and clamping bits */
-      if (ctx->keyframe) {
-        bool_get_uint(&bool, 2);
-      }
-
-      vp8_parse_segmentation_header(&bool);
-      vp8_parse_loopfilter_header(&bool);
-      vp8_parse_partitions(&bool);
-      vp8_parse_quantizer_header(&bool);
-      vp8_parse_reference_header(&bool, ctx);
-
-      dump_frame_info(streamInspector->fdout, ctx);
-    }
-  //}
   return GST_PAD_PROBE_HANDLED;
 }
-
-StreamInspector *
-stream_inspector_initialize (gchar * padName) {
-  log_info("stream_inspector_initialize [padName: %s]", padName);
-
-  StreamInspector * streamInspector = (StreamInspector *) malloc(1 * sizeof(StreamInspector));
-  gchar **split = g_strsplit(padName, "_", 0);
-  gchar *ssrc = split[4];
-
-  streamInspector->bin = gst_bin_new(NULL);
-  streamInspector->ssrc = g_strdup_printf("%s", ssrc);
-  streamInspector->ptsOffset = 0;
-  streamInspector->frameNumber = 0;
-
-  gchar * filename = g_strdup_printf("%s/%s.log", outputPath, ssrc);
-  streamInspector->fdout = fopen(filename, "w");
-
-  g_object_set(streamInspector->bin, "message-forward", TRUE, NULL);
-
-  g_free(filename);
-  g_strfreev(split);
-  return streamInspector;
-}
-
 
 static void
 on_pad_removed (GstElement * rtpbin, GstPad * pad, Inspector * inspector)
@@ -238,7 +274,9 @@ on_pad_removed (GstElement * rtpbin, GstPad * pad, Inspector * inspector)
       gst_element_send_event(streamInspector->bin, gst_event_new_eos());
       g_hash_table_remove(inspector->streams, padName);
       g_free(streamInspector->ssrc);
-      fclose(streamInspector->fdout);
+      if (outputPath) {
+        fclose(streamInspector->fdout);
+      }
       free(streamInspector);
     }
   }

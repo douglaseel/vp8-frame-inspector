@@ -16,6 +16,7 @@ The deps are:
 * `make`
 * `gcc`
 * `pkg-config`
+* `glib-2.0`
 * `gstreamer`, `gst-plugins-base`, `gst-plugins-good`, `gst-plugins-bad` and gstreamer dev package.
 
 A few examples of installation:
@@ -85,3 +86,33 @@ $ ./out/inspector --file <PCAP_FILE> --payloadType=<VP8_PAYLOAD_TYPE> --outputPa
 ```
 
 The results will be respect the same logic than the realtime inspection.
+
+### Output format
+
+The output format follows this pattern:
+
+```
+ssrc: 240336986, frame: 0, pts: 0, ok: 1, keyframe: 1, show: 1, width: 320, height: 240, refreshGoldenFrame: 1, refreshAltrefFrame: 1 
+ssrc: 240336986, frame: 1, pts: 33, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+ssrc: 240336986, frame: 2, pts: 66, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+ssrc: 240336986, frame: 3, pts: 99, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+ssrc: 240336986, frame: 4, pts: 131, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+ssrc: 240336986, frame: 5, pts: 163, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+ssrc: 240336986, frame: 6, pts: 196, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+ssrc: 240336986, frame: 7, pts: 228, ok: 1, keyframe: 0, show: 1, width: 320, height: 240, refreshGoldenFrame: 0, refreshAltrefFrame: 0 
+...
+```
+
+Where we have one frame inspection per line with the fields:
+
+- `ssrc`: synchronization source identifier from RTP packets (it's the only way to differ multiple results when we are using `--stdout` options);
+- `frame`: frame number. It always start with 0 (see (here)[../HISTORY.md]);
+- `pts`: presentation timestamp in miliseconds. It always start with 0 (see (here)[../HISTORY.md]);
+- `ok`:  value `1` represents a good frame and `0` a invalid one;
+  - It's already detect a few types of broken frames;
+- `keyframe`: if this is a keyframe or not;
+- `show`: if this frame should be displayed or not;
+- `width`: frame width;
+- `height`: frame height;
+- `refreshGoldenFrame`: if this frame should update the golden frame or not;
+- `refreshAltrefFrame`: if this frame should update the altref frame or not;
