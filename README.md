@@ -20,11 +20,83 @@ This repo is divided in two folders:
 
 ## Getting started
 
-This repo has a few docs, so we recommend you to read in this order:
+This repo has a few docs, so we recommend you to read some docs before continue:
 
 1. `inspector` documentation (see [here](inspector/README.md))
 2. `server` sample documentation (see [here](sample/server/README.md))
 3. `client` sample documentation (see [here](sample/client/README.md));
-4. `How to test it locally?` documentation (see [here](HOWTO.md))
-5. See the historical decisions [here](HISTORY.md)
-6. Look into the `inspector` code, there are a few comments to guide you there!
+4. See the historical decisions [here](HISTORY.md)
+
+## How to test it locally?
+
+### 1. Build the `inspector` tool
+
+```shell
+cd inspector
+make
+```
+
+### 2. Starting the server sample
+
+Open a terminal and exec
+
+```shell
+cd sample/server
+yarn install
+yarn dev
+```
+
+After this command the server should be listening the `5555` port.
+
+### 3. Starting the client sample
+
+Open another terminal and exec
+
+```shell
+cd sample/client
+yarn install
+HTTPS=true yarn start
+```
+
+The client should be up in the port `3000` or other (if anyone is already listening to this port).
+
+**NOTE:** you should up the server first because we are using a proxy in the client to do the requests to the server (see `proxy` config in [package.json](sample/client/package.json) file)
+
+### 4. Creating a meeting
+
+1. Open a browser at client page (usually https://127.0.0.1:3000/);
+2. Create a new room with a cute name;
+3. Add your name and confirm;
+4. Congratulation! You are in a very SIMPLE meeting.
+
+
+### 5. Start to inspecting
+
+Inside a meeting you can start your webcam streaming. When you do it, the SFU will receive your RTP packets and send them to the `inspector` tool.
+
+You propably will note that a folder called `inspector-results` was created in the project root folder. 
+Inside this folder you will see one file per video streaming using VP8.
+
+The name of file should be the `<SSRC>.log`.
+
+**NOTE:** the `ssrc` used in the rtp consumed is different from the produced in the browser because mediasoup does it. 
+
+### 6. Check the RESULTS!
+
+
+## Next steps
+
+The `inspector` is a tool under development so there are too many things to do, such as:
+
+* Add automated tests;
+* Detect corrupted frames comparing the frame size with the partitions size;
+* Extract more info about the frame;
+* Evaluate how `packet loss` could affect the frame itself
+  * Probably we need to look `rtpvp8depay` code more deeper to better undestanding
+* Add RTSP support for realtime capture;
+* Add a filter options to capture only specific scenarios (ex.: corrupted frames, unsupported bitstream, etc);
+* Replace the current `vp8_parser` code to libvpx or similar (intel libva maybe?);
+* Add support for others video codecs like H264, VP9 and AV1;
+* Add support for IVF files (https://wiki.multimedia.cx/index.php/IVF);
+* Add `--stdin` flag to read the input data directly from stdin;
+* Transform that `server/src/inspector.ts` in one node module to simplify the integration with other solutions;
