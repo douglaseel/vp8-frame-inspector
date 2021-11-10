@@ -70,10 +70,10 @@ Application Options:
 To inspect realtime streaming, you should use the `--port <PORT>` option to do the `inspector` listening for RTP packages in that port.
 
 ```
-$ ./out/inspector --port=<UDP_PORT> --payloadType=<VP8_PAYLOAD_TYPE> --outputPath=<PATH_TO_RESULTS>
+$ ./out/inspector --port=55555 --payloadType=105 --outputPath="../inspector-results"
 ```
 
-For each new `SSRC` detected by `inspector` tool, a new file will be created with the results in the `<PATH_TO_RESULTS>` folder with `<SSRC>.log` name. 
+For each new `SSRC` detected by `inspector` tool, a new file will be created with the results in the `outputPath` folder with `<SSRC>.log` name. 
 So, basically, we will have `N` files for `N` streams.
 
 
@@ -82,7 +82,7 @@ So, basically, we will have `N` files for `N` streams.
 You also can use the `inspector` to inspect one or more VP8 streams in a PCAP file. To do it, use the `--file <PCAP_FILE>` option. See the example:
 
 ```
-$ ./out/inspector --file <PCAP_FILE> --payloadType=<VP8_PAYLOAD_TYPE> --outputPath=<PATH_TO_RESULTS>
+$ ./out/inspector --file sample.pcap --payloadType=105 --outputPath="../inspector-results"
 ```
 
 The results will be respect the same logic than the realtime inspection.
