@@ -23,7 +23,8 @@ This repo is divided in two folders:
 This repo has a few docs, so we recommend you to read in this order:
 
 1. `inspector` documentation (see [here](inspector/README.md))
-2. `sample` documentation (see [here](sample/README.md))
-3. `How to test it locally?` documentation (see [here](HOWTO.md))
-4. See the historical decisions [here](HISTORY.md)
-5. Look into the `inspector` code, there are a few comments to guide you there!
+2. `server` sample documentation (see [here](sample/server/README.md))
+3. `client` sample documentation (see [here](sample/client/README.md));
+4. `How to test it locally?` documentation (see [here](HOWTO.md))
+5. See the historical decisions [here](HISTORY.md)
+6. Look into the `inspector` code, there are a few comments to guide you there!
