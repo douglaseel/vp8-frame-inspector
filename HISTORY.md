@@ -18,7 +18,7 @@ The first and obviously conclusion that I had was:
 
 
 So, considering that RTP seqnum and timestamp starts with random values and 1 frame propably will be contained in more than 1 RTP packet, I considered:
-  - The frame "0" will be the first frame received by the **inspector**;
+  - The frame "0" will be the first frame received by the `inspector`;
   - The presentation timestamp will be relative to the first frame received, so, every analyzed stream will have the presentation timestamp equals to zero for the first receiver frame;
 
 
@@ -28,7 +28,7 @@ In the begining I tried to do a very simple and high level tool, using `node`.
 I builded all GStreamer pipeline using `node-gtk` modules and everything worked until try to access the VP8 Frame buffer. 
 The problem was something like: I had the memory address from that buffer but how can I transform that into a node Buffer?
 
-So I decided to go back to my roots and replaced all **inspector** javascript code to C =)
+So I decided to go back to my roots and replaced all `inspector` javascript code to C =)
   - No GStreamer wrapper needed;
   - Easily access to GStreamer VP8 frame data;
   - More easier to lead with bistreams too!

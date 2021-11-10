@@ -1,9 +1,9 @@
 # VP8 Frame Inspector
 
-The **inspector** is a CLI tool to extract some info about VP8 frames. 
+The `inspector` is a CLI tool to extract some info about VP8 frames. 
 It can be used for inspecting realtime or captured RTP VP8 data;
 
-The **inspector** basically does:
+The `inspector` basically does:
   * Create a GStreamer pipeline that:
     * receive the RTP data (from a UDP socket or PCPA file); and
     * extract the VP8 frames from the RTP;
@@ -35,7 +35,7 @@ This command will build and create the binary that will be available at `out/ins
 
 ## Usage
 
-The **inspector** has a `--help` command that show all available options.]
+You can exec `inspector --help` command to see all available options.
 
 ```
 $ ./out/inspector --help
@@ -64,8 +64,8 @@ When we use this command
 $ ./out/inspector --port=<UDP_PORT> --payloadType=<VP8_PAYLOAD_TYPE> --outputPath=<PATH_TO_RESULTS>
 ```
 
-the **inspector** will listening the UDP `UDP_PORT` for RTP packets with the payload `VP8_PAYLOAD_TYPE`.
-For each new `SSRC` detected by **inspector** tool, a new file will be created with the results in the `PATH_TO_RESULTS` folder with `<SSRC>.log` name. 
+the `inspector` will listening the UDP `UDP_PORT` for RTP packets with the payload `VP8_PAYLOAD_TYPE`.
+For each new `SSRC` detected by `inspector` tool, a new file will be created with the results in the `PATH_TO_RESULTS` folder with `<SSRC>.log` name. 
 So, basically, we will have `N` files for `N` streams
 
 
@@ -78,3 +78,20 @@ $ ./out/inspector --file <PCAP_FILE> --payloadType=<VP8_PAYLOAD_TYPE> --outputPa
 ```
 
 The result will be respect the same logic than realtime analysis.
+
+
+
+## Next steps
+
+* Add automated tests;
+* Detect corrupted frames comparing the frame size with the partitions size;
+* Extract more info about the frame (ex: );
+* Evaluate how `packet loss` could affect the frame itself
+  * Probably we need to look `rtpvp8depay` code more deeper to better undestanding
+* Add RTSP support for realtime capture;
+* Add a filter options to capture only specific scenarios (ex.: corrupted frames, unsupported bitstream, etc);
+* Replace the current `vp8_parser` code to libvpx or similar (intel libva maybe?);
+* Add support for others video codecs like H264, VP9 and AV1;
+* Add support for IVF files (https://wiki.multimedia.cx/index.php/IVF);
+* Add `--stdin` flag to read the input data directly from stdin;
+* Transform that `server/src/inspector.ts` in one node module to simplify the integration with other solutions;
