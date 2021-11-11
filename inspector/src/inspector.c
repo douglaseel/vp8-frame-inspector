@@ -130,15 +130,7 @@ inspect_frame_info(StreamInspector * streamInspector, unsigned char * data, unsi
   ctx->pts = timestamp;
   ctx->frameNumber = streamInspector->frameNumber++;
 
-  if (vp8_parse_frame_header(data, size, ctx)) goto dump_frame;
-
-  data += FRAME_HEADER_SZ;
-  size -= FRAME_HEADER_SZ;
-  if (ctx->keyframe)
-  {
-    data += KEYFRAME_HEADER_SZ;
-    size -= KEYFRAME_HEADER_SZ;
-  }
+  ctx->ok = !vp8_parse_header(data, size, ctx);
 
   if (ctx->keyframe) {
     streamInspector->lastResolution.width = ctx->resolution.width;
@@ -151,32 +143,6 @@ inspect_frame_info(StreamInspector * streamInspector, unsigned char * data, unsi
     ctx->resolution.height = streamInspector->lastResolution.height;
     ctx->resolution.heightScale = streamInspector->lastResolution.heightScale;
   }
-
-  init_bool_decoder(&bool, data, ctx->partSize);
-
-  /* Skip the colorspace and clamping bits */
-  if (ctx->keyframe) {
-    bool_get_uint(&bool, 2);
-  }
-
-  if (vp8_parse_segmentation_header(&bool)) 
-    goto dump_frame;
-  
-  if (vp8_parse_loopfilter_header(&bool)) 
-    goto dump_frame;
-
-  if (vp8_parse_partitions(&bool)) 
-    goto dump_frame;
-
-  if (vp8_parse_quantizer_header(&bool)) 
-    goto dump_frame;
-
-  if (vp8_parse_reference_header(&bool, ctx)) 
-    goto dump_frame;
-
-  ctx->ok = TRUE;
-  
-  dump_frame:
 
   dump_frame_info(streamInspector, ctx);
   free(ctx);
@@ -367,7 +333,7 @@ on_pad_removed (GstElement * rtpbin, GstPad * pad, Inspector * inspector)
  * 
  * So basically we are using rtpbin to lead with the
  * RTP scenarios (packet loss, misordering, jitter) and
- * rtpvp8depay to put all packets frame together!
+ * rtpvp8depay to put all packets to that frame together!
  * 
  * */
 static void

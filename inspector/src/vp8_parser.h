@@ -50,6 +50,7 @@ typedef struct
 } FrameInfo;
 
 
+guint vp8_parse_header(unsigned char * data, unsigned int len, FrameInfo * ctx);
 guint vp8_parse_frame_header(const unsigned char * data, const unsigned int len, FrameInfo * ctx);
 guint vp8_parse_segmentation_header(struct bool_decoder *bool);
 guint vp8_parse_loopfilter_header(struct bool_decoder *bool);

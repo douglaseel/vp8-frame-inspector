@@ -114,3 +114,43 @@ vp8_parse_reference_header(struct bool_decoder * bool, FrameInfo * ctx)
   ctx->refreshAltrefFrame = ctx->keyframe ? TRUE : bool_get_bit(bool);
   return VP8_CODEC_OK;
 }
+
+guint
+vp8_parse_header(unsigned char * data, unsigned int len, FrameInfo * ctx)
+{
+  guint res;
+  struct bool_decoder bool;
+
+  res = vp8_parse_frame_header(data, len, ctx);
+  if (res != VP8_CODEC_OK) return res;
+
+  data += FRAME_HEADER_SZ;
+  len -= FRAME_HEADER_SZ;
+  if (ctx->keyframe)
+  {
+    data += KEYFRAME_HEADER_SZ;
+    len -= KEYFRAME_HEADER_SZ;
+  }
+
+  init_bool_decoder(&bool, data, ctx->partSize);
+
+  /* Skip the colorspace and clamping bits */
+  if (ctx->keyframe) {
+    bool_get_uint(&bool, 2);
+  }
+
+  res = vp8_parse_segmentation_header(&bool);
+  if (res != VP8_CODEC_OK) return res;
+  
+  res = vp8_parse_loopfilter_header(&bool);
+  if (res != VP8_CODEC_OK) return res;
+
+  res = vp8_parse_partitions(&bool);
+  if (res != VP8_CODEC_OK) return res;
+
+  res = vp8_parse_quantizer_header(&bool);
+  if (res != VP8_CODEC_OK) return res;
+
+  res = vp8_parse_reference_header(&bool, ctx);
+  return res;
+}
