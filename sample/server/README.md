@@ -12,7 +12,7 @@ More info about this service:
 - we are creating `N` workers, where `N` is the number of cpu cores that the instance has;
 - we are using one router per meeting, without no optimizations (so it's a very limited meeting);
 - we are only creating and closing the producers/consumers, without no logic for pause/resume;
-- the produce and consume actions should ALWAYS start by the client side, so basically
+- the produce and consume actions ALWAYS start by the client side, so basically
   - a peer create a producer;
   - the other peers in the same room will be notified about it;
   - each peer can decide if will consume that stream or not;
@@ -20,8 +20,8 @@ More info about this service:
 
 ### `inspector` integration
 
-As the `inspector` tool already demux multiple streams, we decided to create one instance per room, so basically:
-- we spawn a `inspector` child process per room using `--port` and `--outputPath` options;
+As the `inspector` tool already demux multiple streams, we decided to create one instance per room, so:
+- we spawn a `inspector` child process per room setting `--port` and `--outputPath` options;
 - we use a `PlainTransport` to send data to `inspector`;
 - we create a `inspector` consumer for each new video producer in the room;
 

@@ -38,7 +38,7 @@ make
 
 ### 2. Starting the server sample
 
-Open a terminal and exec
+Open a terminal and execute
 
 ```shell
 cd sample/server
@@ -50,7 +50,7 @@ After this command the server should be listening the `5555` port.
 
 ### 3. Starting the client sample
 
-Open another terminal and exec
+Open another terminal and execute
 
 ```shell
 cd sample/client
@@ -58,9 +58,9 @@ yarn install
 HTTPS=true yarn start
 ```
 
-The client should be up in the port `3000` or other (if anyone is already listening to this port).
+The client should be UP in the port `3000` or other (if anyone is already listening to this port).
 
-**NOTE:** you should up the server first because we are using a proxy in the client to do the requests to the server (see `proxy` config in [package.json](sample/client/package.json) file)
+**NOTE:** you should UP the server first because we are using a proxy in the client to do the requests to the server (see `proxy` config in [package.json](sample/client/package.json) file)
 
 ### 4. Creating a meeting
 
@@ -74,12 +74,12 @@ The client should be up in the port `3000` or other (if anyone is already listen
 
 Inside a meeting you can start your webcam streaming. When you do it, the SFU will receive your RTP packets and send them to the `inspector` tool.
 
-You propably will note that a folder called `inspector-results` will be created in the project root folder. 
+You probably will note that a folder called `inspector-results` will be created in the project root folder. 
 Inside this folder you will see one file per video streaming using VP8.
 
 The name of file should be the `<SSRC>.log`.
 
-**IMPORTANT:** the `ssrc` used in the rtp consumed is different from the produced in the browser because mediasoup does it. 
+**IMPORTANT:** the `ssrc` used in the rtp consumed is different from the produced in the browser because mediasoup does it.
 
 ### 6. Check the RESULTS!
 
@@ -89,7 +89,7 @@ The output format is specified [here](inspector/README.md).
 
 The `inspector` is a tool under development so there are too many things to do, such as:
 
-* Add automated tests related to golden and altref frames;
+* Add a few more automated tests;
 * Improve EOS treatment;
 * Detect corrupted frames comparing the frame size with the partitions size;
 * Improve performance (we can reuse FrameInfo for more than one frame, it'll avoid many `calloc`/`free` calls);
