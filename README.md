@@ -102,4 +102,4 @@ The `inspector` is a tool under development so there are too many things to do, 
 * Add support for others video codecs like H264, VP9 and AV1;
 * Add support for IVF files (https://wiki.multimedia.cx/index.php/IVF);
 * Add `--stdin` flag to read the input data directly from stdin;
-* Transform that `server/src/inspector.ts` in one node module to simplify the integration with other solutions;
+* Transform that `server/src/mediaserver/inspector.ts` in one node module to simplify the integration with other solutions;
