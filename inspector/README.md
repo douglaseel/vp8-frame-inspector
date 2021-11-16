@@ -112,8 +112,8 @@ ssrc: 240336986, frame: 7, pts: 228, ok: 1, keyframe: 0, show: 1, width: 320, he
 Where we have one frame inspection per line with the fields:
 
 - `ssrc`: synchronization source identifier from RTP packets (it's the only way to differ multiple results when we are using `--stdout` options);
-- `frame`: frame number. It always start with 0 (see [here](../HISTORY.md);
-- `pts`: presentation timestamp in miliseconds. It always start with 0 (see [here](../HISTORY.md);
+- `frame`: frame number. It always start with 0 (see [here](../HISTORY.md));
+- `pts`: presentation timestamp in miliseconds. It always start with 0 (see [here](../HISTORY.md));
 - `ok`:  value `1` represents a good frame and `0` a invalid one;
   - It's already detect a few types of broken frames;
 - `keyframe`: if this is a keyframe or not;
